@@ -1,22 +1,21 @@
 #coding=gbk
 #_Author:Iron Joe
-#date:2020/8/20
+#date:2020/8/31
 #vesion 2.0
 # 更新:
-#1.定位出错位置
+# 1.定位出错位置
+# 2.错误数据输出成一个txt文件用于查看
 # 待更新:
 # 1.描述错误出现的原因
-# 2.错误数据输出成一个txt文件用于查看
 # 3.UI控制界面
 # 4.减小程序的打包文件
-
-import requests
 import xlrd
 import xlsxwriter
 import os
 import re
 import time
 import easygui
+import sys
 from rich.progress import track
 
 header = ['日期','发出供应商','名称','规格','铝高/铝环','箱数','每箱个数','尾数','总数量','送货日期','送回数量']
@@ -31,33 +30,6 @@ def get_sheet(fh):#获取excel文件下的所有sheet
 
 def get_sheetrow_num(sheet):  # 获取sheet下有多少行数据
     return sheet.nrows
-
-def get_sheet_data(sheet, row):  # 获取sheet下单行的数据
-    all_data = []
-    processor = ''
-    d_time = ''
-    for i in range(4,row):
-        if i == 4:
-            p_d = sheet.row_values(i)
-            blank_removal(p_d)
-            processor = re.split(r'[:,：]',p_d[0])[1]
-            d_time = re.split(r'[:,：]',p_d[1])[1].replace('-','/')
-        elif i ==5:
-            pass
-        else:
-            values = sheet.row_values(i)
-            all_data.append(values)
-    for i in all_data:
-        if count_list(i) <= 3:
-            all_data.remove(i)
-    all_data2 = list_clear(all_data)
-    for i in all_data2:
-        try:
-            data_process(i, processor, d_time)
-        except Exception:
-            print("数据异常,请检查数据:日期为%s 的数据 %s"%(d_time,i))
-    return all_data2
-
 #替换成处理后的数据
 def list_replace(list_4,processor,d_time):
     new_list = []
@@ -99,6 +71,33 @@ def data_process(list_2,processor,d_time):
     list_2[9:] = ['']
     return list_2
 
+def get_sheet_data(sheet, row):  # 获取sheet下单行的数据
+    all_data = []
+    processor = ''
+    d_time = ''
+    for i in range(4,row):
+        if i == 4:
+            p_d = sheet.row_values(i)
+            blank_removal(p_d)
+            processor = re.split(r'[:,：]',p_d[0])[1]
+            d_time = re.split(r'[:,：]',p_d[1])[1].replace('-','/')
+        elif i ==5:
+            pass
+        else:
+            values = sheet.row_values(i)
+            all_data.append(values)
+    for i in all_data:
+        if count_list(i) <= 3:
+            all_data.remove(i)
+    all_data2 = list_clear(all_data)
+    for i in all_data2:
+        try:
+            data_process(i, processor, d_time)
+        except Exception:
+            with open("error.txt",'a+') as fh:
+                error_text = "数据异常,请检查数据:日期为%s 的数据 %s\n"%(d_time,i)
+                fh.write(error_text)
+    return all_data2
 if __name__ == '__main__':
     struct_time = time.localtime()  # 元组格式
     f_time = time.strftime('%Y-%m-%d', struct_time)  # 自定义格式,字符串时间*****
