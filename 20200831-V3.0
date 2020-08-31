@@ -126,4 +126,3 @@ if __name__ == '__main__':
     print('文件生成成功!')
     print('请查看该路径下 %s 的 %s 文件'%(location,"汇总明细表-%s.xlsx"%f_time))
     os.system('pause')
-    exit()
