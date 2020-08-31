@@ -1,0 +1,129 @@
+#coding=gbk
+#_Author:Iron Joe
+#date:2020/8/20
+#vesion 2.0
+# 更新:
+#1.定位出错位置
+# 待更新:
+# 1.描述错误出现的原因
+# 2.错误数据输出成一个txt文件用于查看
+# 3.UI控制界面
+# 4.减小程序的打包文件
+
+import requests
+import xlrd
+import xlsxwriter
+import os
+import re
+import time
+import easygui
+from rich.progress import track
+
+header = ['日期','发出供应商','名称','规格','铝高/铝环','箱数','每箱个数','尾数','总数量','送货日期','送回数量']
+
+def open_excel(name):  # 打开Excel文件
+    fh = xlrd.open_workbook(name)
+    return fh
+
+def get_sheet(fh):#获取excel文件下的所有sheet
+    sheets = fh.sheets()
+    return sheets
+
+def get_sheetrow_num(sheet):  # 获取sheet下有多少行数据
+    return sheet.nrows
+
+def get_sheet_data(sheet, row):  # 获取sheet下单行的数据
+    all_data = []
+    processor = ''
+    d_time = ''
+    for i in range(4,row):
+        if i == 4:
+            p_d = sheet.row_values(i)
+            blank_removal(p_d)
+            processor = re.split(r'[:,：]',p_d[0])[1]
+            d_time = re.split(r'[:,：]',p_d[1])[1].replace('-','/')
+        elif i ==5:
+            pass
+        else:
+            values = sheet.row_values(i)
+            all_data.append(values)
+    for i in all_data:
+        if count_list(i) <= 3:
+            all_data.remove(i)
+    all_data2 = list_clear(all_data)
+    for i in all_data2:
+        try:
+            data_process(i, processor, d_time)
+        except Exception:
+            print("数据异常,请检查数据:日期为%s 的数据 %s"%(d_time,i))
+    return all_data2
+
+#替换成处理后的数据
+def list_replace(list_4,processor,d_time):
+    new_list = []
+    for i in list_4:
+        i = data_process(i,processor,d_time)
+        new_list.append(i)
+    return new_list
+
+def count_list(list_):#计算非''的个数
+    num_=len(list_)-list_.count('')
+    return num_
+
+# 列表内无意义行数据清除,利用数据的有效个数
+def list_clear(list_3):
+    i_list = []
+    n_list =[]
+    for i in range(len(list_3)):
+        if count_list(list_3[i]) < 3:
+            i_list.append(list_3[i])
+    for i in list_3:
+        if i not in i_list:
+            n_list.append(i)
+    return n_list
+#列表空白去除,主用于加工商与日期
+def blank_removal(list_1):
+    while '' in list_1:
+        list_1.remove('')
+    return list_1
+#数据处理,把列表内的每一个数据变成可写入的数据
+def data_process(list_2,processor,d_time):
+    list_2[0:1] = [d_time,processor]
+    del list_2[3]#直接利用索引值删除
+    list_2[5:6] = ['','','']
+    string_ = str(list_2[8])#转换数据类型，不然会报错
+    regex = '.*[=,＝].*'
+    if re.search(regex,string_):
+        new_list_8 = re.split(r'[=,＝]', string_)
+        list_2[8] = new_list_8[1].strip()
+    list_2[9:] = ['']
+    return list_2
+
+if __name__ == '__main__':
+    struct_time = time.localtime()  # 元组格式
+    f_time = time.strftime('%Y-%m-%d', struct_time)  # 自定义格式,字符串时间*****
+    file_name = easygui.fileopenbox()
+    # easygui.msgbox(file_name)
+    fh = open_excel(file_name)
+    fh_sheet = get_sheet(fh)
+    all_data = []
+
+    for i_sheet in fh_sheet:
+        rows = get_sheetrow_num(i_sheet)
+        sheet_data= get_sheet_data(i_sheet, rows)
+        for i in sheet_data:
+            all_data.append(i)
+    all_data.insert(0,header)
+    location = os.path.dirname(os.path.dirname(os.path.abspath(file_name)))
+    new_excel = location + "\汇总明细表-%s.xlsx"%f_time # 新建的excel文件名字
+    fh1 = xlsxwriter.Workbook(new_excel)  # 新建一个excel表
+    new_sheet = fh1.add_worksheet()  # 新建一个sheet表
+    for i in track(range(len(all_data))):
+        for j in range(len(all_data[i])):
+            c = all_data[i][j]
+            new_sheet.write(i, j, c)
+    fh1.close()  # 关闭该excel表
+    print('文件生成成功!')
+    print('请查看该路径下 %s 的 %s 文件'%(location,"汇总明细表-%s.xlsx"%f_time))
+    os.system('pause')
+    exit()
