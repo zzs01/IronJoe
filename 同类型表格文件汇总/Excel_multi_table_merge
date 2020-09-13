@@ -1,0 +1,140 @@
+# _Author:Iron Joe
+# date:2020/8/15
+
+# -*- coding: UTF-8 -*-
+
+'''
+1.添加自适应调整表格
+'''
+
+import xlrd
+import xlsxwriter
+import glob
+import os
+import copy
+from rich.progress import track
+
+def get_excel(location):  # 获取要合并的所有exce表格
+    all_excel_1 = glob.glob('%s/*.xls' % location)  # 列出文件夹下所有的xls文件
+    all_excel_2 = glob.glob('%s/*.xlsx' % location)
+    all_excel = all_excel_1 + all_excel_2
+    print("该目录下有" + str(len(all_excel)) + "个excel文件：")
+    if (len(all_excel) == 0):
+        return 0
+    else:
+        for i in range(len(all_excel)):
+            print(all_excel[i])
+        return all_excel
+
+def open_excel(name):  # 打开Excel文件
+    fh = xlrd.open_workbook(name)
+    return fh
+
+# 获取excel文件下的所有sheet
+# def get_sheet(fh):
+#     sheets = fh.sheets()
+#     return sheets
+
+# 获取excel文件下的第一个sheet
+def get_sheet(fh):
+    sheets = fh.sheets()[0]
+    return sheets
+
+def get_sheetrow_num(sheet):  # 获取sheet下有多少行数据
+    return sheet.nrows
+
+def get_sheetrow_col(sheet):  # 获取sheet下有多少行数据
+    return sheet.nrows
+
+def get_sheet_data(sheet, row):  # 获取sheet下的数据
+    all_data = []
+    Header = None
+    for i in range(row):
+        if i == 0:
+            Header = sheet.row_values(i)
+        else:
+            values = sheet.row_values(i)
+            all_data.append(values)
+    return all_data, Header
+
+def deduplication(list_):  # 数据去重
+    list_2 = []
+    for i in list_:
+        if i not in list_2:
+            list_2.append(i)
+    return list_2
+
+font_size = 10
+
+def wb_format(wb):#定义数据的样式
+    cell_format = wb.add_format()
+    cell_format.set_align('center')#水平居中
+    cell_format.set_align('vcenter')#垂直居中
+    cell_format.set_font_name('Arial')#字体样式
+    cell_format.set_font_size(font_size)#字体大小
+    return cell_format
+
+def row_ro_col_data(list1):#获取列数据,行列转换
+    '''
+    :param list1: 原始数据
+    :return: list
+    '''
+    return map(list, zip(*list1))
+
+def len_max(list1):#返回列表中最大的长度
+    def string_len(string):
+        length = 0
+        for s in string:
+            if s.isupper() or s.islower():
+                length += 2
+            elif s.isspace():
+                length += 1
+            else:
+                length += 3
+        return length
+    for i in range(len(list1)):
+        list1[i] = string_len(str(list1[i]))
+    len_max_data = max(list1)*2.835*2/font_size
+
+    return len_max_data
+
+def auto_adjust_width(all_list):
+    len_data = []
+    for li in all_list:
+        len_data.append(len_max(li))
+    return len_data
+
+def main(location):
+    all_excel = get_excel(location)
+    all_data = []  # 用于保存合并的所有行的数据
+    Header = ''
+    for excel in track(all_excel):  # 下面开始文件数据的获取
+        fh = open_excel(excel)  # 打开文件
+        sheet = get_sheet(fh)
+        rows = get_sheetrow_num(sheet)  # 获取一个sheet下的所有的数据的行数
+        for row in range(2, rows + 1):
+            all_sheet_data, Header = get_sheet_data(sheet, row)
+            if row == rows:
+                for i in range(len(all_sheet_data)):
+                    all_data.append(all_sheet_data[i])  # 把每一行作为列表的内容拆出加入大列表
+    all_data.insert(0, Header)  # 表头写入
+    all_data = deduplication(all_data)  # 去重
+    # 下面开始文件数据的写入
+    new_excel = location + "test.xlsx"  # 新建的excel文件名字
+    fh1 = xlsxwriter.Workbook(new_excel)  # 新建一个excel表
+    new_sheet = fh1.add_worksheet()  # 新建一个sheet表
+    for row_num, row_data in enumerate(all_data):
+        for col_num, col_data in enumerate(row_data):
+            new_sheet.write(row_num, col_num, col_data,wb_format(fh1))
+    for i,data_ in enumerate(auto_adjust_width(row_ro_col_data(all_data))):
+        new_sheet.set_column(i,i,data_)
+    fh1.close()  # 关闭该excel表
+
+if __name__ == '__main__':
+    location = input(r"请输入Excel文件所在的正确目录：")
+    if os.path.isdir(location):
+        main(location)
+        print("文件合并成功,请查看“" + location + "”目录下的test.xlsx文件！")
+    else:
+        print('错误路径!!!')
+    os.system('pause')
