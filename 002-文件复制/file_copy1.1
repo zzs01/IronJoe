@@ -1,0 +1,104 @@
+#_Author:Iron Joe
+#date:2020/9/13
+
+'''
+version 1.1
+更新：
+1.消除类型输入的'.'
+2.输入循环，不正确便一直输入
+
+待加入：
+1.大小写忽略
+2.类型忽略
+3.同名文件处理
+4.编码问题解决
+5.gui界面设计
+
+BUG:
+1.input 的对象为字符串
+'''
+import os
+import shutil
+import re
+
+#递归返回文件位置
+def search_type(str1,str_list,s_type):
+    '''
+    :param str: 输入的字符串
+    :param str_list: 匹配的字符串列表
+    :param se_type:  模糊还是精确搜索，0精确，1模糊
+    :return: copy_flag
+    '''
+    copy_flag = 0
+    if s_type == '1':
+        for i in str_list:
+            if  i in str1:
+                copy_flag = 1
+    if s_type == '0':
+        if str1 in str_list:
+            copy_flag = 1
+    return copy_flag
+
+file_list = []
+def move_file(starting_address,destination_address,file_need_list,file_type,s_type):
+    list_dir = os.listdir(starting_address)#起始位置所有文件
+    for file_ in list_dir:
+        dir_or_file_path = os.path.join(starting_address, file_)
+        if os.path.isdir(dir_or_file_path):#文件夹判断.对绝对路径
+            move_file(dir_or_file_path,destination_address,file_need_list,file_type,s_type)#递归遍历文件
+        elif os.path.isfile(dir_or_file_path):#文件判断.对绝对路径
+            (filename, extension) = os.path.splitext(file_)#文件名以及拓展名分割
+            if extension == '.'+file_type:#文件类型比较
+                if search_type(filename,file_need_list,s_type):#在文件内的进行操作
+                    shutil.copy(dir_or_file_path, destination_address)
+                    file_list.append(dir_or_file_path)
+                    # shutil.move(dir_or_file_path,destination_address)
+
+def get_need_list(file_ref):
+    with open(file_ref, 'r',encoding='utf-8') as f:
+        filename_list = []
+        for i in f:
+            filename_list.append(i.strip())
+    while '' in filename_list:#去除空白
+        filename_list.remove('')
+    print(filename_list)
+    return filename_list
+
+def file_get_list(list_file,destination_folder):
+    if len(list_file):
+        with open(r'%s/000目标文件列表.txt' % destination_folder, 'a+', encoding='utf-8') as fh:
+            for i in list_file:
+                fh.write(i+'\n')
+
+def f_main():
+    exit_flag = 1
+    print('''0：代表精确匹配
+1：代表模糊匹配''')
+    s_type1 = input(r'请输入匹配模式：'.strip())
+    while exit_flag:
+        starting_folder = input(r'请输入当前文件夹:'.strip())
+        if os.path.isdir(starting_folder):
+            while exit_flag:
+                destination_folder = input(r'请输入目标文件夹:'.strip())
+                if os.path.isdir(destination_folder):
+                    while exit_flag:
+                        file_ref = input(r'请参考文件位置:'.strip())
+                        if os.path.isfile(file_ref):
+                            file_type = input(r'请输入筛选文件类型:'.strip())
+                            file_need_list = get_need_list(file_ref)
+                            move_file(starting_folder, destination_folder, file_need_list, file_type,s_type1)
+                            file_get_list(file_list, destination_folder)
+                            exit_flag = 0
+                        else:
+                            print('此文件不存在,请输入正确文件路径:')
+                else:
+                    print('此路径不存在,请输入正确路径:')
+        else:
+            print('此路径不存在,请输入正确路径:')
+
+if __name__ == '__main__':
+    try:
+        f_main()
+    except Exception:
+        pass
+    # os.system('pause')
