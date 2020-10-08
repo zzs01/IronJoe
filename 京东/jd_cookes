@@ -1,0 +1,50 @@
+## jd_cookie填写模板，按顺序填写
+## cookie:
+我的；
+pt_key=dafdsfasdfsadfsdfsd; pt_pin=dfafdsfasdfsd;
+
+朋友的：
+
+pt_key=dafdsfasdfsadfsdfsd; pt_pin=dfafdsfasdfsd;
+
+朋友2的：
+pt_key=dafdsfasdfsadfsdfsd; pt_pin=dfafdsfasdfsd;
+
+## 种豆得豆助力码
+###bean
+我的；
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjflksdjflksdjf
+
+朋友的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjflksdjflksdjf
+
+朋友2的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjflksdjflksdjf
+
+###bean_end
+
+## 东东农场
+###farm
+我的；
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjfl
+
+朋友的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjfd
+
+朋友2的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjfl
+
+###farm_end
+
+## 京东萌宠
+###pet
+我的；
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjf=
+
+朋友的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdjd=
+
+朋友2的：
+dfadsfafdasjfklsadjflkjsdlfkjdlsdjfklsdaa=
+
+###pet_end
