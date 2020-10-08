@@ -1,6 +1,6 @@
 #_Author:Iron Joe
 #date:2020/10/8
-# Version v1.0
+
 import re
 import copy
 #读取有效数据
@@ -21,10 +21,11 @@ def useful_text(text_list,start_text,end_text):
 # 有效数据处理
 def text_process(jd_game,available_value):
     jd_game_all_list = []
+    jd_game_copy = copy.deepcopy(jd_game)
     for i in range(len(jd_game)):
-        item = jd_game.pop(i)
-        jd_game.insert(0, item)
-        jd_game2 = jd_game[0:available_value]
+        item = jd_game_copy.pop(i)
+        jd_game_copy.insert(0, item)
+        jd_game2 = jd_game_copy[0:available_value]
         game_all = '@'.join(jd_game2)
         jd_game_all_list.append(game_all)
     return jd_game_all_list
@@ -40,22 +41,16 @@ re_pt_key=r'(?m)^pt_key=?.*.;$'
 pt_key=re.findall(re_pt_key,text_all)#6
 cookies_num = len(pt_key)
 cookies='&'.join(pt_key) + '&'
-print("京东cookies（JD_COOKIE）：")
-print(cookies,"\n")
 
 # 种豆得豆互助码：
 jd_bean = useful_text(text_list,'###bean','###bean_end')
 bean_all_list = text_process(jd_bean,None)
 bean_all_text = '&'.join(bean_all_list)+'&'
-print("种豆得豆互助码（PLANT_BEAN_SHARECODES）：")
-print(bean_all_text,"\n")
 
 # 东东农场
 jd_farm=useful_text(text_list,'###farm','###farm_end')
 farm_all_list = text_process(jd_farm,None)
 farm_all_text = '&'.join(farm_all_list)+'&'
-print('东东农场互助码（FruitShareCodes）：')
-print(farm_all_text,"\n")
 
 # 京东萌宠互助码：
 jd_pet = useful_text(text_list,'###pet','###pet_end')
@@ -64,25 +59,22 @@ for i in range(len(pet_all_list)):
     pet_all_list[i] = pet_all_list[i] + '='
     pet_all_list[i] = pet_all_list[i].replace('=@','==@')
 pet_all_text = '&'.join(pet_all_list)+'&'
-print('京东萌宠互助码（PETSHARECODES）：')
-print(pet_all_text)
+print(pet_all_list)
 
-with open('jd_sheet','w',encoding='utf-8') as fh:
-    content = '''京东cookies
+with open('jd_sheet', 'w', encoding='utf-8') as fh:
+    content = '''
+京东cookies
 JD_COOKIE:
 %s
-
 种豆得豆：
 PLANT_BEAN_SHARECODES:
 %s
-    
-东东农场
+
+京东农场：
 FruitShareCodes:
 %s
-
 京东萌宠：   
 PETSHARECODES:
 %s
-    '''%(cookies,bean_all_text,farm_all_text,pet_all_text)
+    ''' % (cookies, bean_all_text, farm_all_text, pet_all_text)
     fh.write(content)
-    
