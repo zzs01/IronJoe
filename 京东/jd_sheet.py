@@ -1,6 +1,6 @@
 #_Author:Iron Joe
 #date:2020/10/8
-
+# Version v1.0
 import re
 import copy
 #读取有效数据
@@ -68,8 +68,7 @@ print('京东萌宠互助码（PETSHARECODES）：')
 print(pet_all_text)
 
 with open('jd_sheet','w',encoding='utf-8') as fh:
-    content = '''
-京东cookies
+    content = '''京东cookies
 JD_COOKIE:
 %s
 
