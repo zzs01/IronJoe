@@ -61,13 +61,13 @@ print(farm_all_text,"\n")
 jd_pet = useful_text(text_list,'###pet','###pet_end')
 pet_all_list = text_process(jd_pet,None)
 for i in range(len(pet_all_list)):
-    pet_all_list[i] = ':::'+pet_all_list[i] + '='
+    pet_all_list[i] = pet_all_list[i] + '='
     pet_all_list[i] = pet_all_list[i].replace('=@','==@')
 pet_all_text = '&'.join(pet_all_list)+'&'
 print('京东萌宠互助码（PETSHARECODES）：')
 print(pet_all_text)
 
-with open('jd_sheet','w') as fh:
+with open('jd_sheet','w',encoding='utf-8') as fh:
     content = '''
 京东cookies
 JD_COOKIE:
