@@ -52,8 +52,6 @@ bean_all_text = '&'.join(bean_all_list)+'&'
 # 东东农场
 jd_farm=useful_text(text_list,'###farm','###farm_end')
 farm_all_list = text_process(jd_farm,6)
-for i in farm_all_list:
-    print(i)
 farm_all_text = '&'.join(farm_all_list)+'&'
 
 # 京东萌宠互助码：
