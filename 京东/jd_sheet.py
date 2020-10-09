@@ -22,9 +22,11 @@ def useful_text(text_list,start_text,end_text):
 def text_process(jd_game,available_value):
     jd_game_all_list = []
     jd_game_copy = copy.deepcopy(jd_game)
-    for i in range(len(jd_game)):
-        item = jd_game_copy.pop(i)
-        jd_game_copy.insert(0, item)
+    len_list = len(jd_game)
+    for i in range(len_list):
+        if i > 0:
+            item = jd_game_copy.pop(0)
+            jd_game_copy.append(item)
         jd_game2 = jd_game_copy[0:available_value]
         game_all = '@'.join(jd_game2)
         jd_game_all_list.append(game_all)
@@ -49,7 +51,9 @@ bean_all_text = '&'.join(bean_all_list)+'&'
 
 # 东东农场
 jd_farm=useful_text(text_list,'###farm','###farm_end')
-farm_all_list = text_process(jd_farm,None)
+farm_all_list = text_process(jd_farm,6)
+for i in farm_all_list:
+    print(i)
 farm_all_text = '&'.join(farm_all_list)+'&'
 
 # 京东萌宠互助码：
@@ -58,8 +62,9 @@ pet_all_list = text_process(jd_pet,None)
 for i in range(len(pet_all_list)):
     pet_all_list[i] = pet_all_list[i] + '='
     pet_all_list[i] = pet_all_list[i].replace('=@','==@')
+    re_pro = r'[.*@]{1}(.*)'#匹配删除第一个助力码
+    pet_all_list[i] = re.findall(re_pro,pet_all_list[i])[0]
 pet_all_text = '&'.join(pet_all_list)+'&'
-print(pet_all_list)
 
 with open('jd_sheet', 'w', encoding='utf-8') as fh:
     content = '''
