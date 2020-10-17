@@ -1,0 +1,43 @@
+#_Author:Iron Joe
+#date:2020/10/14
+
+import os
+import glob
+
+# 无后缀名文件处理
+def no_extension(folder_path):
+    file_list = glob.glob('%s/*'%folder_path)
+    need_file_list = []
+    for i in file_list:
+        (filename, extension) = os.path.splitext(i)
+        if not extension:
+            if not os.path.isdir(filename):
+                need_file_list.append(filename)
+    return need_file_list
+
+# 单个文件夹内容发现
+def single_file_find(folder_path,target_content,file_extent=None):
+    file_list = glob.glob(r'%s/*.%s'%(folder_path,file_extent))
+    if file_extent is None:
+        file_list = no_extension(folder_path)
+    for file in file_list:
+        with open(file,'r',encoding='utf-8') as fh:
+            for each_line in fh:
+                if target_content in each_line.strip():
+                    print(file)
+                    break
+
+# 递归遍历文件夹内的文件夹对象
+def find_file_content(folder_path,target_content,file_extent):
+    single_file_find(folder_path,target_content,file_extent)
+    list_dir = os.listdir(folder_path)#起始位置所有文件
+    for file_ in list_dir:
+        file_path = os.path.join(folder_path,file_)
+        if os.path.isdir(file_path):
+            find_file_content(file_path,target_content,file_extent)
+
+if __name__ =='__main__':
+    folder_path = r'D:\Program Files\PY\test\qiandao-1-master'
+    file_extent = r'py'
+    target_content = r'import'
+    find_file_content(folder_path,target_content,file_extent)
