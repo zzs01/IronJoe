@@ -31,7 +31,7 @@ struct_time = time.localtime() #元组格式
 last_time = time.strftime('%Y-%m-%d',struct_time)# 格式化时间
 
 # 文件输出在txt文件，位置在程序运行位置
-def file_get_list(list_file):
+def file_to_txt(list_file):
     if len(list_file):
         with open(r'目标文件列表-%s.txt'%last_time, 'a+', encoding='utf-8') as fh:
             for i in list_file:
@@ -69,8 +69,22 @@ def find_file_content(folder_path,target_content,file_extent):
             find_file_content(file_path,target_content,file_extent)
 
 if __name__ =='__main__':
+    start_time = time.perf_counter()
+    # 数据清洗
+    with open(r'目标文件列表-%s.txt' % last_time, 'w', encoding='utf-8') as fh:
+        fh.write('')
+
     folder_path = r'D:\Program Files\PY\test\qiandao-1-master'
+
+    '''
+    file_extent = 'N' or 'n'时，支持搜索无后缀文件
+    file_extent = 'A' or 'a'时，支持全文件搜索
+    '''
+
     file_extent = r'A'
     target_content = r'import'
-    find_file_content(folder_path,target_content,file_extent)
-    file_get_list(file_last_list)
+    find_file_content(folder_path,target_content,file_extent) #主程序运行
+    file_to_txt(file_last_list)# txt文件输出
+    ending_time = time.perf_counter()#程序运行时间
+
+    print('程序运行时间:%.3f'%(ending_time-start_time) + 's')
