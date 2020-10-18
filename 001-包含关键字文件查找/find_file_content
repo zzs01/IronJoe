@@ -1,0 +1,76 @@
+#_Author:Iron Joe
+#date:2020/10/14
+
+import os
+import glob
+import time
+
+# 无后缀名文件处理
+def no_extension(folder_path):
+    file_list = glob.glob('%s/*'%folder_path)
+    need_file_list = []
+    for i in file_list:
+        (filename, extension) = os.path.splitext(i)
+        if not extension:
+            if not os.path.isdir(filename):
+                need_file_list.append(filename)
+    return need_file_list
+
+# 支持全部类型文件搜索
+def all_file(folder_path):
+    file_list = glob.glob('%s/*' % folder_path)
+    need_file_list = []
+    for i in file_list:
+        if os.path.isdir(i):
+            pass
+        else:
+            need_file_list.append(i)
+    return need_file_list
+
+struct_time = time.localtime() #元组格式
+last_time = time.strftime('%Y-%m-%d',struct_time)# 格式化时间
+
+# 文件输出在txt文件，位置在程序运行位置
+def file_get_list(list_file):
+    if len(list_file):
+        with open(r'目标文件列表-%s.txt'%last_time, 'a+', encoding='utf-8') as fh:
+            for i in list_file:
+                fh.write(i+'\n')
+
+file_last_list = []
+# 单个文件夹内容发现
+def single_file_find(folder_path,target_content,file_extent):
+    file_list = glob.glob(r'%s/*.%s'%(folder_path,file_extent))
+    if file_extent == 'n'or file_extent =='N':
+        file_list = no_extension(folder_path)
+    if file_extent == 'A' or file_extent == 'a':
+        file_list = all_file(folder_path)
+    for file in file_list:
+        # 异常处理，解码处理
+        try:
+            with open(file,'r',encoding='utf-8') as fh:
+                for each_line in fh:
+                    if target_content in each_line.strip():
+                        print(file)
+                        file_last_list.append(file)
+                        break
+        except Exception:
+            pass
+
+    # file_get_list(list_file,folder_path)
+
+# 递归遍历文件夹内的文件夹对象
+def find_file_content(folder_path,target_content,file_extent):
+    single_file_find(folder_path,target_content,file_extent)
+    list_dir = os.listdir(folder_path)#起始位置所有文件
+    for file_ in list_dir:
+        file_path = os.path.join(folder_path,file_)
+        if os.path.isdir(file_path):
+            find_file_content(file_path,target_content,file_extent)
+
+if __name__ =='__main__':
+    folder_path = r'D:\Program Files\PY\test\qiandao-1-master'
+    file_extent = r'A'
+    target_content = r'import'
+    find_file_content(folder_path,target_content,file_extent)
+    file_get_list(file_last_list)
