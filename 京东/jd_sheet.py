@@ -31,7 +31,7 @@ def useful_text(text_list, start_text, end_text,small_range_value = 20,big_range
 
 # 有效数据处理
 # sacrifice_value 致力于助力前面的号,总人数小于8时建议为0，人数为11时建议小于3
-def text_process(jd_game, available_value, sacrifice_value):
+def text_process(jd_game, available_value, sacrifice_value = 0):
     '''
     :param jd_game: jd游戏助力码，列表形式
     :param available_value: 助力码出现次数，用于列表切分
@@ -41,8 +41,6 @@ def text_process(jd_game, available_value, sacrifice_value):
     jd_game_all_list = []
     jd_game_copy = copy.deepcopy(jd_game)
     len_list = len(jd_game)
-    if not sacrifice_value:
-        sacrifice_value = 0
     available_sacrifice_value = len_list - (4 * len_list) // 5
     if sacrifice_value > available_sacrifice_value:
         sacrifice_value = available_sacrifice_value
@@ -78,7 +76,7 @@ cookies = '&'.join(pt_key) + '&'
 
 # 种豆得豆互助码：
 jd_bean = useful_text(text_list, '###bean', '###bean_end')
-bean_all_list = text_process(jd_bean, 4, 0)
+bean_all_list = text_process(jd_bean, 4)
 bean_all_text = '&'.join(bean_all_list) + '&'
 
 # 东东农场
@@ -88,7 +86,7 @@ farm_all_text = '&'.join(farm_all_list) + '&'
 
 # 京东萌宠互助码：
 jd_pet = useful_text(text_list, '###pet', '###pet_end')
-pet_all_list = text_process(jd_pet, None, 0)
+pet_all_list = text_process(jd_pet, 6)
 for i in range(len(pet_all_list)):
     pet_all_list[i] = pet_all_list[i] + '='
     pet_all_list[i] = pet_all_list[i].replace('=@', '==@')
@@ -99,7 +97,7 @@ pet_all_text = '&'.join(pet_all_list) + '&'
 # 京小超互助码：
 jd_market = useful_text(text_list,'###market','###market_end',10,25)
 print(jd_market)
-market_all_list = text_process(jd_market,None,0)
+market_all_list = text_process(jd_market,None)
 for i in market_all_list:
     print(i)
 market_all_text = '&'.join(market_all_list)+'&'
@@ -109,19 +107,15 @@ with open('jd_sheet', 'w', encoding='utf-8') as fh:
 京东cookies
 JD_COOKIE:
 %s
-
 种豆得豆：
 PLANT_BEAN_SHARECODES:
 %s
-
 京东农场：
 FruitShareCodes:
 %s
-
 京东萌宠：   
 PETSHARECODES:
 %s
-
 京小超：
 SUPERMARKET_SHARECODES:
 %s
