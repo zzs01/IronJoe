@@ -15,6 +15,13 @@ def useful_text(text_list, start_text, end_text,small_range_value = 20,big_range
     :param big_range_value: 满足内容字符串长度最小范围最大值-1
     :return: 不同jd游戏的有效助力码
     '''
+    # 是否含有中文字符
+    def is_contains_chinese(strs):
+        for _char in strs:
+            if '\u4e00' <= _char <= '\u9fa5':
+                return True
+        return False
+    
     start_flag = False
     jd_game_use = []
     for i in range(len(text_list)):
@@ -24,7 +31,7 @@ def useful_text(text_list, start_text, end_text,small_range_value = 20,big_range
             start_flag = False
             pass
         if start_flag:
-            if small_range_value < len(text_list[i]) < big_range_value:
+            if small_range_value < len(text_list[i]) < big_range_value and not is_contains_chinese(text_list[i]):
                 jd_game_use.append(text_list[i])
     return jd_game_use
 
