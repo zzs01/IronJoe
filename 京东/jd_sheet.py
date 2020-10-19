@@ -3,7 +3,7 @@
 
 import re
 import copy
-
+import sys
 
 # 读取有效数据
 def useful_text(text_list, start_text, end_text,small_range_value = 20,big_range_value = 45):
@@ -81,7 +81,14 @@ bean_all_text = '&'.join(bean_all_list) + '&'
 
 # 东东农场
 jd_farm = useful_text(text_list, '###farm', '###farm_end')
-farm_all_list = text_process(jd_farm, 5, 1)
+jd_farm_sage = 0
+
+try:
+    jd_farm_sage = int(sys.argv[1])
+except Exception as er:
+    print(str(er)+"，这个错误可以忽略")
+
+farm_all_list = text_process(jd_farm, 5, jd_farm_sage)
 farm_all_text = '&'.join(farm_all_list) + '&'
 
 # 京东萌宠互助码：
@@ -96,10 +103,7 @@ pet_all_text = '&'.join(pet_all_list) + '&'
 
 # 京小超互助码：
 jd_market = useful_text(text_list,'###market','###market_end',10,25)
-print(jd_market)
 market_all_list = text_process(jd_market,None)
-for i in market_all_list:
-    print(i)
 market_all_text = '&'.join(market_all_list)+'&'
 
 with open('jd_sheet', 'w', encoding='utf-8') as fh:
