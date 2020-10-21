@@ -51,7 +51,7 @@ def text_process(jd_game, available_value, sacrifice_value = 0):
     available_sacrifice_value = len_list - (4 * len_list) // 5
     if sacrifice_value > available_sacrifice_value:
         sacrifice_value = available_sacrifice_value
-        jd_game_copy = jd_game_copy[0:len_list - sacrifice_value]
+    jd_game_copy = jd_game_copy[0:len_list - sacrifice_value]
     for i in range(len(jd_game_copy)):
         if i > 0:
             item = jd_game_copy.pop(0)
