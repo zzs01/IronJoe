@@ -1,0 +1,63 @@
+import requests
+import time
+import re
+
+
+t1 = time.perf_counter()
+
+novel_session = requests.session()
+
+request_header = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.116 Safari/537.36'
+}
+
+home_page = "http://www.biquge.info/" # 小说的网址
+html = requests.get(home_page) #
+
+# response_get = novel_session.get(home_page, verify=False)
+
+# 小说网页内容爬取
+search_key = "修罗武神"
+home_page_link = "http://www.biquge.info/modules/article/search.php?searchkey=" + search_key
+print(home_page_link)
+home_page_response = novel_session.get(home_page_link, verify=False)
+
+home_page_response.encoding = home_page_response.apparent_encoding
+home_page_text = home_page_response.text
+
+# 正则取出爬取后的小说地址前缀
+match_key = r'>%s<[\s.|\S.]+?href="(.+?/)?\d.*'%search_key
+red = re.findall(match_key,home_page_text,re.DOTALL)[0]
+novel_link = home_page+red
+
+# 章节网页内容获取
+res = novel_session.get(novel_link)
+res.encoding = res.apparent_encoding
+content = res.text
+
+# 章节进入入口号
+re_novel_chapter = r'<dd><a href="(.*?).html" title="'
+novel_chapter = re.findall(re_novel_chapter,content,re.DOTALL)
+
+for i in novel_chapter:
+    # 每章节网页内容获取
+    content_link = novel_link+i+'.html'
+    content_res = novel_session.get(content_link)
+    content_res.encoding = res.apparent_encoding
+    content_chapter = content_res.text
+    re_novel_content = r'<div id="content"><!--go-->(.*?)<!--over-->'
+    re_novel_title = r'.*var readtitle = "(.*?)?".*'
+
+    novel_content = re.findall(re_novel_content,content_chapter,re.DOTALL)[0]#章节内容
+    novel_title = re.findall(re_novel_title,content_chapter,re.DOTALL)[0]
+    novel_content_1 = novel_content.replace(r"<br/>",'\n')
+    novel_content_2 = novel_content_1.replace(r'&nbsp;&nbsp;&nbsp;&nbsp;','')
+    with open('修罗武神.txt', 'a', encoding='utf-8') as fh:
+        fh.write(novel_title+'\n'+novel_content_2+'\n'*2)
+t2 = time.perf_counter()
+print(t2-t1)
+print('文件输出完成')
+
+# with open('novel2', 'w', encoding='utf-8') as fh:
+#     fh.write(content)
+
