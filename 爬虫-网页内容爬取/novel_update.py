@@ -45,9 +45,9 @@ def get_novel_link(searchkey):
 def dd_send(novel_name, novel_title, novel_content):
     from dingtalkchatbot.chatbot import DingtalkChatbot, is_not_null_and_blank_str, ActionCard, FeedLink, CardItem
 
-    webhook_token = 'd368bb7e2d09a1b9d2930fa5966ec1529308ffb14735c302aacf516511f2772d'
+    webhook_token = ''
     webhook = 'https://oapi.dingtalk.com/robot/send?access_token=' + webhook_token
-    secret = 'SECeab495847bc91e81fb681583d886895c4354b70ca614eecc2899f72e39f840a1'  # 可选：创建机器人勾选“加签”选项时使用
+    secret = ''  # 可选：创建机器人勾选“加签”选项时使用
     xiaoding = DingtalkChatbot(webhook, secret=secret)  # 方式二：勾选“加签”选项时使用（v1.5以上新功能）
     now = datetime.now()
     now_time = now.strftime("%Y年%m月%d日 %H:%M:%S")
