@@ -48,7 +48,10 @@ def dd_send(novel_name, novel_title, novel_content):
     webhook_token = ''
     webhook = 'https://oapi.dingtalk.com/robot/send?access_token=' + webhook_token
     secret = ''  # 可选：创建机器人勾选“加签”选项时使用
-    xiaoding = DingtalkChatbot(webhook, secret=secret)  # 方式二：勾选“加签”选项时使用（v1.5以上新功能）
+    if not webhook_token or not secret:
+        print("请在程序填写钉钉推送token和secret")
+        return
+    xiaoding = DingtalkChatbot(webhook, secret=secret)
     now = datetime.now()
     now_time = now.strftime("%Y年%m月%d日 %H:%M:%S")
     dd_content = '''%s \n
