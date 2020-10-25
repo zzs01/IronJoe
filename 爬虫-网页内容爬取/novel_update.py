@@ -32,6 +32,7 @@ def query_sql(name,query_key):
     data_tupple_list = cursor.fetchall()
     data_list = [str(i[0]) for i in data_tupple_list if i[0] != '']
     data = "".join(data_list)
+    conn.commit()
     conn.close()
     return data
 
