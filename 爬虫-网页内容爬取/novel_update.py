@@ -116,7 +116,7 @@ def get_novel_content(chapter_link, chapter_title, novel_link, novel_name):
     chapter_content = re.findall(re_novel_content,content,re.DOTALL)[0]
     chapter_content = chapter_content.replace(r"<br/>",'\n')
     drop_content = "正在手打中，请稍等片刻，内容更新后"
-    if not re.search(drop_content,chapter_content):
+    if re.search(drop_content,chapter_content) == None:
         dd_send(novel_name, chapter_title,chapter_content)
     else:
         return "failed"
