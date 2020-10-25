@@ -1,5 +1,6 @@
 # -*- coding:utf8 -*-
-import novel
+
+import novel_update as novel
 import re
 import sys
 from datetime import datetime
@@ -16,16 +17,8 @@ def start_check_novel(novel_file):
             newest_chapter_location =  int("-" + str(novel_name[1]))
         except Exception as er:
             newest_chapter_location = -1
-        if novel_name[0] != "":
-            novel.get_novel_status(novel_name[0], newest_chapter_location)
-            
-            try:
-                novel.status == "success"
-                status = "finish"
-            except Exception as er:
-                status = "unfinished"
-            if novel_name == novel_all_not_blank[-1]:   
-                return status
+
+        novel.get_novel_status(novel_name[0], newest_chapter_location)
                 
 if __name__ == '__main__':
     start = datetime.now()
@@ -34,7 +27,13 @@ if __name__ == '__main__':
     except Exception as er:
         novel_file = "novel_list"
     
-    return_time = start_check_novel(novel_file)
-    if return_time == "finish":
+    start_check_novel(novel_file)
+    
+    try:
+        novel.status == "success"
+        status = "finish"
+    except Exception as er:
+        status = "unfinished"
+    if status == "finish":
         end = datetime.now()
-        novel.dd_send("总共用时", "程序运行时间", str(end-start))
+        novel.dd_send("总共用时", str(end-start), "程序运行时间：" + str(end-start))
