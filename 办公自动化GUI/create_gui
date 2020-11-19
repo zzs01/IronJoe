@@ -1,0 +1,380 @@
+#-*- coding: utf-8 -*-
+
+import wx
+import win32api
+import sys, os
+import wx.lib.agw.aui as aui
+from OfficeAutomation import FileExcelProcessing
+from OfficeAutomation import FilePDFProcessing
+from OfficeAutomation import FileSearch
+APP_TITLE = u'办公自动化'
+APP_ICON = r'gui\图标\favicon.ico'  # 图标
+
+class ExcelFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
+    def __init__(self, parent):
+
+        wx.Panel.__init__(self, parent)
+
+        self.title = wx.StaticText(self, label=u'办公自动化-Excel合并') # 单页标题
+        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
+
+        # 输入框控件
+        self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_pwd.Bind(wx.EVT_TEXT, self.EvtText)
+        hsizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_pwd.Add(self.label_path,proportion=0, flag=wx.ALL, border=5)
+        hsizer_pwd.Add(self.label_pwd, proportion=1, flag = wx.ALL, border = 5)
+
+        # 按钮
+        self.btn_cd = wx.Button(self, label=u'路径选择', pos=(350, 50), size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_confirm = wx.Button(self, label=u'确认',size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self ,label=u'清除',  size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        hsizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_btn.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        hsizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        hsizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+
+        vsizer_all = wx.BoxSizer(wx.VERTICAL)
+        vsizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=20)
+        vsizer_all.Add(hsizer_pwd,proportion=0,flag=wx.EXPAND | wx.LEFT | wx.RIGHT,border = 45)
+        vsizer_all.Add(hsizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=45)
+        self.SetSizer(vsizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+
+        obj = evt.GetEventObject()
+        objName = obj.GetName()
+        self.text = evt.GetString()
+
+    def OnClose(self, evt):
+        """关闭窗口事件函数"""
+
+        dlg = wx.MessageDialog(None, u'确定要关闭本窗口？', u'操作提示', wx.YES_NO | wx.ICON_QUESTION)
+        if (dlg.ShowModal() == wx.ID_YES):
+            self.Destroy()
+
+    def OnclickChooseDir(self,evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_pwd.SetValue(self.path)
+            print(self.path)
+
+    def OnclickConfirm(self,evt):
+        """鼠标确认"""
+        if self.text:
+            self.path = self.text
+        self.event = FileExcelProcessing(self.path)
+        self.event.run()
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_pwd.Clear()
+
+
+class PdfFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
+    def __init__(self, parent):
+
+        wx.Panel.__init__(self, parent)
+
+        self.title = wx.StaticText(self, label=u'办公自动化-pdf合并') # 单页标题
+        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
+
+        # 输入框控件
+        self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_pwd.Bind(wx.EVT_TEXT, self.EvtText)
+        hsizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_pwd.Add(self.label_path,proportion=0, flag=wx.ALL, border=5)
+        hsizer_pwd.Add(self.label_pwd, proportion=1, flag = wx.ALL, border = 5)
+
+        # 按钮
+        self.btn_cd = wx.Button(self, label=u'路径选择', pos=(350, 50), size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_confirm = wx.Button(self, label=u'确认',size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self ,label=u'清除',  size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        hsizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_btn.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        hsizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        hsizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+
+        vsizer_all = wx.BoxSizer(wx.VERTICAL)
+        vsizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=20)
+        vsizer_all.Add(hsizer_pwd,proportion=0,flag=wx.EXPAND | wx.LEFT | wx.RIGHT,border = 45)
+        vsizer_all.Add(hsizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=45)
+        self.SetSizer(vsizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        obj = evt.GetEventObject()
+        self.text = evt.GetString()
+
+    def OnclickChooseDir(self,evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_pwd.SetValue(self.path)
+        print(self.path)
+
+    def OnclickConfirm(self,evt):
+        """鼠标确认"""
+        if self.text:
+            self.path = self.text
+        self.event = FilePDFProcessing(self.path)
+        self.event.MergePDF()
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_pwd.Clear()
+
+
+class FileSearchFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
+    def __init__(self, parent):
+
+        wx.Panel.__init__(self, parent)
+
+        self.title = wx.StaticText(self, label=u'办公自动化-文件搜索') # 单页标题
+        self.label_path = wx.StaticText(self, label=u'搜索路径名')  # 固定
+        self.label_target = wx.StaticText(self, label=u'搜索关键词')
+        self.label_extent = wx.StaticText(self, label=u'文件扩展名')
+
+        # 输入框控件
+        self.label_path_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_path_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_target_wd = wx.TextCtrl(self, name='TC02', style=wx.TE_LEFT)
+        self.label_target_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_extent_wd = wx.TextCtrl(self, name='TC03', style=wx.TE_LEFT)
+        self.label_extent_wd.Bind(wx.EVT_TEXT, self.EvtText)
+
+        self.btn_cd = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_target = wx.Button(self, label=u'清除关键词', size=(100, 25))
+        self.btn_target.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.scores = ['All','None','txt','doc','excel']
+        self.btn_extent = wx.Choice(self, choices = self.scores, size=(70, 25))
+        self.btn_extent.Bind(wx.EVT_CHOICE, self.OnclickChooseExtent)
+        self.btn_extent.SetSelection(0)
+
+        hsizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_pwd.Add(self.label_path,proportion=0, flag=wx.ALL, border=5)
+        hsizer_pwd.Add(self.label_path_wd, proportion=1, flag = wx.ALL, border = 5)
+        hsizer_pwd.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        hsizer_pwd1 = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_pwd1.Add(self.label_target, proportion=0, flag=wx.ALL, border=5)
+        hsizer_pwd1.Add(self.label_target_wd, proportion=1, flag=wx.ALL, border=5)
+        hsizer_pwd1.Add(self.btn_target, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        hsizer_pwd2 = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_pwd2.Add(self.label_extent, proportion=0, flag=wx.ALL, border=5)
+        hsizer_pwd2.Add(self.label_extent_wd, proportion=1, flag=wx.ALL, border=5)
+        self.label_extent_wd.SetValue('All')
+        hsizer_pwd2.Add(self.btn_extent, proportion=0, flag=wx.ALL, border=5)
+
+        # 按钮
+        self.btn_confirm = wx.Button(self, label=u'确认',size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self ,label=u'清除',  size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        hsizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=25)
+        hsizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=25)
+
+        vsizer_all = wx.BoxSizer(wx.VERTICAL)
+        vsizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=10)
+        vsizer_all.Add(hsizer_pwd,proportion=0,flag=wx.LEFT | wx.LEFT | wx.RIGHT,border = 20)
+        vsizer_all.Add(hsizer_pwd1, proportion=0, flag=wx.LEFT | wx.LEFT | wx.RIGHT, border=20)
+        vsizer_all.Add(hsizer_pwd2, proportion=0, flag=wx.LEFT | wx.LEFT | wx.RIGHT, border=20)
+        vsizer_all.Add(hsizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=10)
+        self.SetSizer(vsizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        obj = evt.GetEventObject()
+        objName = obj.GetName()
+        text = evt.GetString()
+        if objName == 'TC02':
+            self.label_target_wd.SetValue(text)
+        elif objName == 'TC03':
+            self.label_extent_wd.SetValue(text)
+
+    def OnclickChooseDir(self,evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_path_wd.SetValue(self.path)
+        print(self.path)
+
+    def OnclickConfirm(self,evt):
+        """鼠标确认"""
+        self.event = FileSearch(self.label_path_wd.GetValue(), self.label_target_wd.GetValue().strip()
+                                , self.label_extent_wd.GetValue())
+        self.event.run()
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_path_wd.Clear()
+
+    def OnclickChooseExtent(self, evt):
+        self.extent_text = evt.GetString()
+        self.label_extent_wd.SetValue(self.extent_text)
+
+
+class mainFrame(wx.Frame):
+    '''程序主窗口类，继承自wx.Frame'''
+
+    id_open = wx.NewIdRef()
+    id_save = wx.NewIdRef()
+    id_quit = wx.NewIdRef()
+
+    id_help = wx.NewIdRef()
+    id_about = wx.NewIdRef()
+
+    def __init__(self, parent):
+        '''构造函数'''
+
+        wx.Frame.__init__(self, parent, -1, APP_TITLE)
+        self.SetBackgroundColour(wx.Colour(224, 224, 224))
+        self.SetSize((500, 400))
+        self.Center()
+
+        if hasattr(sys, "frozen") and getattr(sys, "frozen") == "windows_exe":
+            exeName = win32api.GetModuleFileName(win32api.GetModuleHandle(None))
+            icon = wx.Icon(exeName, wx.BITMAP_TYPE_ICO)
+        else :
+            icon = wx.Icon(APP_ICON, wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icon)
+
+        self.tb1 = self._CreateToolBar()
+
+        # 分页面创建
+        panel_Excel =ExcelFrame(self)
+        panel_Pdf = PdfFrame(self)
+        panel_File_search = FileSearchFrame(self)
+
+        p_left = wx.Panel(self)
+        p_bottom = wx.Panel(self)
+
+        # 分页控制按钮创建
+        btn_excel = wx.Button(p_left, label = u'Excel合并', pos=(8,20), size=(100, -1))
+        btn_excel.Bind(wx.EVT_BUTTON, self.OnSwitchExcel)
+        btn_pdf = wx.Button(p_left, label=u'Pdf合并', pos=(8, 50), size=(100, -1))
+        btn_pdf.Bind(wx.EVT_BUTTON, self.OnSwitchPdf)
+        btn_file_search = wx.Button(p_left, label=u'文件搜索', pos=(8, 80), size=(100, -1))
+        btn_file_search.Bind(wx.EVT_BUTTON, self.OnSwitchFileSearch)
+
+        self._mgr = aui.AuiManager()
+        self._mgr.SetManagedWindow(self)
+
+        #工具条创建
+        self._mgr.AddPane(self.tb1,
+            aui.AuiPaneInfo().Name("ToolBar1").Caption(u"工具条").ToolbarPane().Top().Row(0).Position(0).Floatable(False).CaptionVisible(False).Resizable(True)
+        )
+        # 功能切换
+        self._mgr.AddPane(p_left,
+            aui.AuiPaneInfo().Name("LeftPanel").Left().Layer(1).MinSize((100,-1)).Caption(u"功能切换区").CaptionVisible(False).Resizable(True)
+        )
+
+        # 一功能区域
+        self._mgr.AddPane(panel_Excel,
+            aui.AuiPaneInfo().Name("CenterPanelExcel").CenterPane().Show()
+        )
+
+        # 二功能区域
+        self._mgr.AddPane(panel_Pdf,
+            aui.AuiPaneInfo().Name("CenterPanelPdf").CenterPane().Hide()
+        )
+
+        # 三功能区域
+        self._mgr.AddPane(panel_File_search,
+            aui.AuiPaneInfo().Name("CenterPanelFileSearch").CenterPane().Hide()
+        )
+
+        # 消息显示区域
+        self._mgr.AddPane(p_bottom,
+            aui.AuiPaneInfo().Name("BottomPanel").Bottom().MinSize((-1,100)).Caption(u"消息区").CaptionVisible(False).Resizable(True)
+        )
+
+        self._mgr.Update()
+
+    def _CreateToolBar(self, d='H'):
+        '''创建工具栏'''
+
+        bmp_open = wx.Bitmap(r'gui\图标\icon\Open.ico', wx.BITMAP_TYPE_ANY,)
+        bmp_save = wx.Bitmap(r'gui\图标\icon\Save.ico', wx.BITMAP_TYPE_ANY)
+        bmp_help = wx.Bitmap(r'gui\图标\icon\Copy.ico', wx.BITMAP_TYPE_ANY)
+        bmp_about = wx.Bitmap(r'gui\图标\icon\About.ico', wx.BITMAP_TYPE_ANY)
+
+        if d.upper() in ['V', 'VERTICAL']:
+            tb = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, agwStyle=aui.AUI_TB_TEXT|aui.AUI_TB_VERTICAL)
+        else:
+            tb = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, agwStyle=aui.AUI_TB_TEXT)
+        tb.SetToolBitmapSize(wx.Size(16, 16))
+
+        tb.AddSimpleTool(self.id_open, u'打开', bmp_open, u'打开文件')
+        tb.AddSimpleTool(self.id_save, u'保存', bmp_save, u'保存文件')
+        tb.AddSeparator()
+        tb.AddSimpleTool(self.id_help, u'帮助', bmp_help, u'帮助')
+        tb.AddSimpleTool(self.id_about, u'关于', bmp_about, u'关于')
+
+        tb.Realize()
+        return tb
+
+    def OnSwitch(self,ret_flag,ect=None):
+        '''切换信息显示窗口'''
+
+        p0 = self._mgr.GetPane('CenterPanelExcel')
+        p1 = self._mgr.GetPane('CenterPanelPdf')
+        p2 = self._mgr.GetPane('CenterPanelFileSearch')
+
+        p_list = [p0,p1,p2]
+
+        p_mode = p_list.pop(ret_flag)
+        p_mode.Show()
+
+        for i in p_list:
+            i.Hide()
+
+        self._mgr.Update()
+
+    def OnSwitchExcel(self, evt=None):
+        '''Excel合并'''
+        self.OnSwitch(0)
+
+    def OnSwitchPdf(self, evt=None):
+        '''PDF合并'''
+        self.OnSwitch(1)
+
+    def OnSwitchFileSearch(self, evt=None):
+        '''文件搜索'''
+        self.OnSwitch(2)
+
+
+class mainApp(wx.App):
+    def OnInit(self):
+        self.SetAppName(APP_TITLE)
+        self.Frame = mainFrame(None)
+        self.Frame.Show()
+        return True
+
+if __name__ == "__main__":
+    app = mainApp()
+    app.MainLoop()
