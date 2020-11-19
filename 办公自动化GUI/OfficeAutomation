@@ -1,0 +1,578 @@
+# ！/usr/bin/env python
+# @Time     :2020/11/8 21:11
+# @Author   :IronJoe
+# @Site     :
+# @File     :OfficeAutomation.py
+# @Software :PyCharm
+
+import glob
+import os
+import re
+import shutil
+import time
+
+import xlrd  # 用于读取数据
+from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfFileWriter
+from openpyxl import Workbook  # 用于写入数据，支持大型数据写入
+from tqdm import tqdm
+
+
+class FileProcessing:
+    """
+    根据提供的关键字进行文件查找
+    """
+
+    def __init__(self, origin_folder_path):
+        """
+        :param origin_folder_path:
+        """
+
+        self.origin_folder_path = origin_folder_path
+
+        struct_time = time.localtime()  # 元组格式
+        self.last_time = time.strftime('%Y-%m-%d', struct_time)  # 格式化时间
+
+    @staticmethod
+    def file_without_extension(folder_path1):
+        """
+        返回无拓展名的文件列表，静态方法，便于使用遍历
+        :param folder_path1:
+        :return:
+        """
+        # 遍历文件夹
+        file_list = glob.glob('%s/*' % folder_path1)
+        need_file_list = []
+        for file in file_list:
+            (filename, extension) = os.path.splitext(file)
+            if not extension:
+                if not os.path.isdir(filename):
+                    need_file_list.append(filename)
+        need_file_list.sort()
+        return need_file_list
+
+    @staticmethod
+    def file_only_type(folder_path3, extent_name):
+        """
+        返回有拓展名的文件列表，静态方法，便于使用遍历，兼容大小写
+        :param folder_path3:
+        :param extent_name:
+        :return:
+        """
+        only_type_file_list = []
+        file_list = glob.glob(r'{}/*'.format(folder_path3))
+        for file in file_list:
+            (filename, extension) = os.path.splitext(file)
+            if extension.lower() == '.' + extent_name.lower():
+                only_type_file_list.append(file)
+        return only_type_file_list
+
+    @staticmethod
+    def file_all_type(folder_path2):
+        """
+        返回所有类型文件的列表，静态方法，便于使用遍历
+        :param folder_path2:
+        :return:
+        """
+        file_list = glob.glob('%s/*' % folder_path2)
+        need_file_list = []
+        for i in file_list:
+            if os.path.isdir(i):
+                pass
+            else:
+                need_file_list.append(i)
+        need_file_list.sort()
+        return need_file_list
+
+    def file_to_txt(self, list_file, path=None):
+        """
+        如果最终返回的列表有内容，文件保存
+        :param path:
+        :param list_file:
+        :return:
+        """
+        if not path:
+            file_path = r'目标文件列表-%s.txt' % self.last_time
+        else:
+            file_path = r'%s/目标文件列表-%s.txt' % (path, self.last_time)
+        if len(list_file):
+            with open(file_path, 'a+', encoding='utf-8') as fh:
+                for i in list_file:
+                    fh.write(i + '\n')
+
+    def data_clear(self, path=None):
+
+        # 数据清洗
+
+        if not path:
+            file_path = r'目标文件列表-%s.txt' % self.last_time
+        else:
+            file_path = r'%s/目标文件列表-%s.txt' % (path, self.last_time)
+
+        with open(file_path, 'w', encoding='utf-8') as fh:
+            fh.write('')
+
+
+class FileCopy(FileProcessing):
+    """
+    version 1.0
+    已有功能
+    1.精确匹配复制数据
+    2.模糊匹配
+    3.根据类型搜索
+
+    待加入：
+    1.大小写忽略
+    2.类型忽略
+    3.同名文件处理
+
+    BUG:
+    1.input 的对象为字符串
+    """
+
+    def __init__(self, origin_folder_path, destination_folder1, file_ref1, file_extent_name, s_type=0):
+        """
+
+        :param origin_folder_path:
+        :param destination_folder1:
+        :param file_ref1:
+        :param s_type:
+        """
+        super().__init__(origin_folder_path)
+        self.destination_path = destination_folder1
+        self.file_ref = file_ref1
+        self.search_type = s_type
+        self.file_extent = file_extent_name
+
+    def search_flag(self, str1, str_list):
+        """
+        精确匹配或模糊匹配，0精确匹配名字
+        :param str1:
+        :param str_list: 匹配的字符串列表
+        :return: copy_flag
+        """
+        copy_flag = 0
+        if self.search_type == 1:
+            for i in str_list:
+                if re.findall(r'.*%s.*' % i.strip(), str1):
+                    copy_flag = 1
+        if not self.search_type:
+            if str1 in str_list:
+                copy_flag = 1
+        return copy_flag
+
+    def get_need_list(self):
+        """
+        需要的文件列表返回
+        :return:
+        """
+        with open(self.file_ref, 'r', encoding='UTF-8-sig') as f:  # 去除\ufeff
+            filename_list = []
+            for i in f:
+                filename_list.append(i.strip())
+        return filename_list
+
+    def single_file_copy(self, folder_path2, file_need_list):
+
+        if self.file_extent == 'n' or self.file_extent == 'N':
+            file_list = self.file_without_extension(folder_path2)
+
+        elif self.file_extent == 'A' or self.file_extent == 'a':
+            file_list = self.file_all_type(folder_path2)
+
+        else:
+            file_list = self.file_only_type(folder_path2, self.file_extent)
+
+        file_find_list = []
+
+        for file in file_list:
+            # 异常处理，解码处理
+            (filename, extension) = os.path.splitext(file)
+
+            filename = re.split(r'[\\/]', filename)[-1]
+
+            if self.search_flag(filename, file_need_list):
+                shutil.copy2(file, self.destination_path)
+                file_find_list.append(file)
+
+        self.file_to_txt(file_find_list, self.destination_path)  # txt文件输出
+
+    def copy_file(self, folder_path1, file_need_list):
+        """
+
+        :param folder_path1:
+        :param file_need_list:
+        :return:
+        """
+        self.single_file_copy(folder_path1, file_need_list)
+        list_dir = os.listdir(folder_path1)  # 起始位置所有文件
+        for file_ in list_dir:
+            file_path = os.path.join(folder_path1, file_)
+            if os.path.isdir(file_path):
+                self.copy_file(file_path, file_need_list)
+
+    def run(self):
+
+        start_time = time.perf_counter()
+
+        self.data_clear(self.destination_path)
+
+        file_need_list = self.get_need_list()
+        print(file_need_list)
+
+        self.copy_file(self.origin_folder_path, file_need_list)
+
+        ending_time = time.perf_counter()
+
+        print('\n')
+        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
+
+
+class FileCompared(FileProcessing):
+    """
+    对两个文件夹内的文件进行对比
+    """
+
+    def __init__(self, ext_name, start_folder1=None, start_folder2=None, tar_folder1=None, tar_folder2=None):
+        self.start_folder_path1 = start_folder1
+        self.start_folder_path2 = start_folder2
+        self.file_extent = ext_name
+        self.tar_folder_path1 = tar_folder1
+        self.tar_folder_path2 = tar_folder2
+
+    @staticmethod
+    def cmp_file(f1, f2):
+        """
+        两个文件对比,二进制法打开对比
+        :param f1:
+        :param f2:
+        :return:
+        """
+        st1 = os.stat(f1)
+        st2 = os.stat(f2)
+
+        # 比较两个文件的大小
+        if st1.st_size != st2.st_size:
+            return False
+
+        buf_size = 8 * 1024
+        # 二进制方法打开数据
+        with open(f1, 'rb') as fp1, open(f2, 'rb') as fp2:
+            while True:
+                b1 = fp1.read(buf_size)  # 读取指定大小的数据进行比较
+                b2 = fp2.read(buf_size)
+
+                if b1 != b2:
+                    return False
+                if not b1:  # 数据读取完毕，仍然没有不同
+                    return True
+
+    # 读取两个文件的文件进行对比排序
+    def file_list(self, folder_path5):
+
+        if self.file_extent == 'n' or self.file_extent == 'N':
+            file_list = self.file_without_extension(folder_path5)
+
+        elif self.file_extent == 'A' or self.file_extent == 'a':
+            file_list = self.file_all_type(folder_path5)
+
+        else:
+            file_list = glob.glob(r'%s/*.%s' % (folder_path5, self.file_extent))
+            file_list.sort()
+
+        return file_list
+
+    def file_move(self, f1, f2):
+        # 相同文件剪切
+        shutil.move(f1, self.tar_folder_path1)
+        shutil.move(f2, self.tar_folder_path2)
+
+    def run(self):
+        start_time = time.perf_counter()
+
+        f_list1 = self.file_list(self.start_folder_path1)
+        f_list2 = self.file_list(self.start_folder_path2)
+
+        for i in range(len(f_list1)):
+            if self.cmp_file(f_list1[i], f_list2[i]):
+                self.file_move(f_list1[i], f_list2[i])
+
+        ending_time = time.perf_counter()
+
+        print('\n')
+        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
+
+
+class FileExcelProcessing(FileProcessing):
+
+    def __init__(self, origin_folder_path):
+        super().__init__(origin_folder_path)
+
+    def get_excel(self, folder_path1):  # 获取要合并的所有excel表格
+
+        all_excel_1 = self.file_only_type(folder_path1, 'xls')  # 列出文件夹下所有的xls文件
+        all_excel_2 = self.file_only_type(folder_path1, 'xlsx')
+        all_excel = all_excel_1 + all_excel_2
+
+        if len(all_excel) == 0:
+            pass
+        else:
+            return all_excel
+
+    @staticmethod
+    def open_excel(file_name):  # 打开Excel文件
+
+        fh = xlrd.open_workbook(file_name)
+
+        return fh
+
+    @staticmethod
+    def get_sheet(fh):
+        """
+        获取excel文件下的所有sheet
+        :return:
+        """
+        sheets = fh.sheets()
+        return sheets
+
+    @staticmethod
+    def get_sheetrow_num(sheet):  # 获取sheet下有多少行数据
+        return sheet.nrows
+
+    @staticmethod
+    def get_sheet_data(sheet, row):
+        """
+        # 获取sheet下的数据
+        :param sheet:
+        :param row:
+        :return:
+        """
+        all_data = []
+        header = None
+        for i in range(row):
+            if i == 0:
+                header = sheet.row_values(i)
+            else:
+                values = sheet.row_values(i)
+                all_data.append(values)
+        return all_data, header
+
+    @staticmethod
+    def deduplication(list_):
+        """
+        # 数据去重
+        :param list_:
+        :return:
+        """
+        list_2 = []
+        for i in list_:
+            if i not in list_2:
+                list_2.append(i)
+        return list_2
+
+    def data_extraction(self):
+
+        all_excel = self.get_excel(self.origin_folder_path)
+        all_data = []  # 用于保存合并的所有行的数据
+        header = ''
+        for excel in tqdm(all_excel, '开始数据提取'):  # 下面开始文件数据的获取
+            fh = self.open_excel(excel)  # 打开文件
+            sheet = self.get_sheet(fh)[0]
+            rows = self.get_sheetrow_num(sheet)  # 获取一个sheet下的所有的数据的行数
+            for row in range(2, rows + 1):
+                all_sheet_data, header = self.get_sheet_data(sheet, row)
+                if row == rows:
+                    for i in range(len(all_sheet_data)):
+                        all_data.append(all_sheet_data[i])  # 把每一行作为列表的内容拆出加入大列表
+        all_data.insert(0, header)  # 表头写入
+        all_data = self.deduplication(all_data)  # 去重
+        return all_data
+
+    def data_to_excel(self, data):
+        """
+        下面开始文件数据的写入
+        :param data:
+        :return:
+        """
+
+        new_excel = self.origin_folder_path + "合并完成_{}.xlsx".format(self.last_time)  # 新建的excel文件名字
+        fh1 = Workbook()  # 新建一个excel表
+        new_sheet = fh1.active  # 第一张工作表必用
+        # new_sheet2 = fh1.create_sheet()#后面再使用
+
+        for row_num, row_data in enumerate(data):
+            new_sheet.append(row_data)
+
+        fh1.save(new_excel)  # 关闭该excel表
+
+    def run(self):
+
+        start_time = time.perf_counter()
+
+        all_data = self.data_extraction()
+
+        self.data_to_excel(all_data)
+
+        print("文件合并成功,请查看“" + self.origin_folder_path + "”目录下的test.xlsx文件！")
+
+        ending_time = time.perf_counter()
+
+        print('\n')
+        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
+
+
+class FileSearch(FileExcelProcessing):
+
+    def __init__(self, origin_folder_path, target_text, file_extent_name):
+        """
+        file_extent = 'N' or 'n'时，支持搜索无后缀文件
+        file_extent = 'A' or 'a'时，支持全文件搜索
+        :param origin_folder_path:
+        :param target_text:
+        :param file_extent_name:
+        """
+        super().__init__(origin_folder_path)
+        self.target_content = target_text
+        self.file_extent = file_extent_name.lower()
+
+    def single_file_find(self, folder_path3):
+        """
+        单个文件夹内容寻找
+        :param folder_path3: 文件路径
+        :return:
+        """
+        if self.file_extent == 'n':
+            pass
+
+        if self.file_extent == 'a':
+            file_list = self.file_all_type(folder_path3)
+
+        else:
+            file_list = self.file_only_type(folder_path3, self.file_extent)
+
+        file_last_list = []
+
+        for file in file_list:
+            # 异常处理，解码处理
+            try:
+                with open(file, 'r') as fh:
+                    for each_line in fh:
+                        if self.target_content in each_line.strip():
+                            file_last_list.append(file)
+                            break
+            except Exception:
+                continue
+
+        self.file_to_txt(file_last_list)  # txt文件输出
+
+    def single_excel_find(self, folder_path5):
+        excel_list = self.get_excel(folder_path5)
+        if excel_list:
+            file_list = []
+            for excel_name in excel_list:
+                excel_ = xlrd.open_workbook(excel_name)
+                for sheet in excel_.sheets():
+                    num = sheet.nrows
+                    for i in range(num):
+                        if self.target_content in str(sheet.row_values(i)):
+                            file_list.append(excel_name)
+                            # print(excel_name)
+                            break
+            self.file_to_txt(file_list)
+
+    def find_file_content(self, folder_path4):
+        """
+        # 递归遍历文件夹内的文件夹对象
+        :param folder_path4:
+        :return:
+        """
+        if self.file_extent == 'xls' or self.file_extent == 'xlsx':
+            self.single_excel_find(folder_path4)
+        elif self.file_extent == 'a':
+            self.single_excel_find(folder_path4)
+            self.single_file_find(folder_path4)
+        else:
+            self.single_file_find(folder_path4)
+
+        list_dir = os.listdir(folder_path4)  # 起始位置所有文件
+
+        for file_ in list_dir:
+            file_path = os.path.join(folder_path4, file_)
+            if os.path.isdir(file_path):
+                self.find_file_content(file_path)
+
+    def run(self):
+
+        start_time = time.perf_counter()
+
+        # 数据清洗
+        self.data_clear()
+
+        self.find_file_content(self.origin_folder_path)  # 主程序运行
+        ending_time = time.perf_counter()  # 程序运行时间
+
+        print('\n')
+        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
+
+
+class FilePDFProcessing(FileProcessing):
+
+    def __init__(self, origin_folder_path = None):
+        super().__init__(origin_folder_path)
+
+    def MergePDF(self):
+        # 实例化写入对象
+        output = PdfFileWriter()
+        outputPages = 0
+        # 调用上一个函数获取全部文件的绝对路径
+        file_list = self.file_only_type(self.origin_folder_path, 'pdf')
+
+        for pdf_file in file_list:
+
+            print("文件：%s" % pdf_file.split('\\')[-1], end=' ')
+
+            # 读取PDF文件
+            pdf_reader = PdfFileReader(open(pdf_file, "rb"), strict=False)
+            # 获得源PDF文件中页面总数
+            pageCount = pdf_reader.getNumPages()
+            outputPages += pageCount
+            print("页数：%d" % pageCount)
+            # 分别将page添加到输出output中
+            for iPage in range(pageCount):
+                output.addPage(pdf_reader.getPage(iPage))
+        print("\n合并后的总页数:%d" % outputPages)
+        # 写入到目标PDF文件
+        print("PDF文件正在合并，请稍等......")
+
+        new_pdf = self.origin_folder_path + "merge_{}.pdf".format(self.last_time)
+
+        with open(new_pdf, "wb") as outPutFile:
+            # 注意这里的写法和正常的上下文文件写入是相反的
+            output.write(outPutFile)
+        print("PDF文件合并完成")
+
+    @staticmethod
+    def SplitPDF(pdf_filename):
+
+        pdf_reader = PdfFileReader(open(pdf_filename, "rb"), strict=False)
+        for page in range(pdf_reader.getNumPages()):
+            pdf_writer = PdfFileWriter()
+            pdf_writer.addPage(pdf_reader.getPage(page))
+            with open("分割后的PDF文件{}.pdf".format(page), "wb") as out:
+                pdf_writer.write(out)
+
+
+"""
+添加pdf文件搜索
+"""
+
+if __name__ == '__main__':
+    folder_path = r'F:\001-程序学习\001-Python'
+    des_path = r'F:\001-程序学习\001-Python\000-学习\002-办公自动化'
+    # folder_path = r'F:\001-程序学习\001-Python\004-项目测试\pdftest'
+
+    file_ref = r'F:\001-程序学习\001-Python\000-学习\002-办公自动化\目标文件列表-2020-11-.txt'
+
+    test = FileSearch(folder_path, '块', 'a')
+    # test.MergePDF()
+    test.run()
