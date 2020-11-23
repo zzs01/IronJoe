@@ -84,6 +84,28 @@ class FileProcessing:
         need_file_list.sort()
         return need_file_list
 
+    @staticmethod
+    def auto_save_file(file):
+
+        directory, file_name = os.path.split(file)
+        filename, extension= os.path.splitext(file)
+
+        if extension:
+            file_name = re.split(r'[\\/]', filename)[-1]
+        else:
+            extension=''
+
+        while os.path.isfile(file):
+            pattern = '(\d+)\)'
+            if re.search(pattern, file_name) is None:
+                file_name = file_name+r'(0)'
+            else:
+                current_number = int(re.findall(pattern, file_name)[-1])
+                new_number = current_number + 1
+                file_name = file_name.replace(f'({current_number})', f'({new_number})')
+            file_new = os.path.join(directory + os.sep + file_name) +extension
+            return file_new
+
     def file_to_txt(self, list_file, path=None):
         """
         如果最终返回的列表有内容，文件保存
@@ -174,10 +196,10 @@ class FileCopy(FileProcessing):
 
     def single_file_copy(self, folder_path2, file_need_list):
 
-        if self.file_extent == 'n' or self.file_extent == 'N':
+        if self.file_extent == 'None':
             file_list = self.file_without_extension(folder_path2)
 
-        elif self.file_extent == 'A' or self.file_extent == 'a':
+        elif self.file_extent == 'All':
             file_list = self.file_all_type(folder_path2)
 
         else:
@@ -192,7 +214,14 @@ class FileCopy(FileProcessing):
             filename = re.split(r'[\\/]', filename)[-1]
 
             if self.search_flag(filename, file_need_list):
-                shutil.copy2(file, self.destination_path)
+                try:
+                    shutil.copy2(file, self.destination_path)
+                except shutil.SameFileError:
+                    (path, filename) = os.path.split(file)
+                    new_file = os.path.join(self.destination_path,filename)
+                    # print(new_file)
+                    file_new_name = self.auto_save_file(new_file)
+                    shutil.copy2(file, file_new_name)
                 file_find_list.append(file)
 
         self.file_to_txt(file_find_list, self.destination_path)  # txt文件输出
@@ -433,7 +462,7 @@ class FileSearch(FileExcelProcessing):
         """
         super().__init__(origin_folder_path)
         self.target_content = target_text
-        self.file_extent = file_extent_name.lower()
+        self.file_extent = file_extent_name
 
     def single_file_find(self, folder_path3):
         """
@@ -441,10 +470,10 @@ class FileSearch(FileExcelProcessing):
         :param folder_path3: 文件路径
         :return:
         """
-        if self.file_extent == 'n':
+        if self.file_extent == 'None':
             pass
 
-        if self.file_extent == 'a':
+        if self.file_extent == 'All':
             file_list = self.file_all_type(folder_path3)
 
         else:
@@ -486,7 +515,7 @@ class FileSearch(FileExcelProcessing):
         :param folder_path4:
         :return:
         """
-        if self.file_extent == 'xls' or self.file_extent == 'xlsx':
+        if self.file_extent == 'excel':
             self.single_excel_find(folder_path4)
         elif self.file_extent == 'a':
             self.single_excel_find(folder_path4)
