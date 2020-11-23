@@ -262,10 +262,9 @@ class FileCompared(FileProcessing):
     对两个文件夹内的文件进行对比
     """
 
-    def __init__(self, ext_name, start_folder1=None, start_folder2=None, tar_folder1=None, tar_folder2=None):
+    def __init__(self,start_folder1=None, start_folder2=None, tar_folder1=None, tar_folder2=None):
         self.start_folder_path1 = start_folder1
         self.start_folder_path2 = start_folder2
-        self.file_extent = ext_name
         self.tar_folder_path1 = tar_folder1
         self.tar_folder_path2 = tar_folder2
 
@@ -297,19 +296,6 @@ class FileCompared(FileProcessing):
                     return True
 
     # 读取两个文件的文件进行对比排序
-    def file_list(self, folder_path5):
-
-        if self.file_extent == 'n' or self.file_extent == 'N':
-            file_list = self.file_without_extension(folder_path5)
-
-        elif self.file_extent == 'A' or self.file_extent == 'a':
-            file_list = self.file_all_type(folder_path5)
-
-        else:
-            file_list = glob.glob(r'%s/*.%s' % (folder_path5, self.file_extent))
-            file_list.sort()
-
-        return file_list
 
     def file_move(self, f1, f2):
         # 相同文件剪切
@@ -319,10 +305,12 @@ class FileCompared(FileProcessing):
     def run(self):
         start_time = time.perf_counter()
 
-        f_list1 = self.file_list(self.start_folder_path1)
-        f_list2 = self.file_list(self.start_folder_path2)
+        f_list1 = self.file_all_type(self.start_folder_path1)
+
+        f_list2 = self.file_all_type(self.start_folder_path2)
 
         for i in range(len(f_list1)):
+            print(i)
             if self.cmp_file(f_list1[i], f_list2[i]):
                 self.file_move(f_list1[i], f_list2[i])
 
