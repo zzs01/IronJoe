@@ -59,14 +59,14 @@ class ExcelFrame(wx.Panel):
         """输入框事件函数"""
         self.text = evt.GetString()
 
-    def OnClose(self):
+    def OnClose(self, evt):
         """关闭窗口事件函数"""
 
         dlg = wx.MessageDialog(None, u'确定要关闭本窗口？', u'操作提示', wx.YES_NO | wx.ICON_QUESTION)
         if dlg.ShowModal() == wx.ID_YES:
             self.Destroy()
 
-    def OnclickChooseDir(self):
+    def OnclickChooseDir(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -75,14 +75,14 @@ class ExcelFrame(wx.Panel):
             self.label_pwd.SetValue(self.path)
             print(self.path)
 
-    def OnclickConfirm(self):
+    def OnclickConfirm(self, evt):
         """鼠标确认"""
         if self.text:
             self.path = self.text
         self.event = FileExcelProcessing(self.path)
         self.event.run()
 
-    def OnclickClear(self):
+    def OnclickClear(self, evt):
         """清除框架内容"""
         self.label_pwd.Clear()
 
@@ -128,7 +128,7 @@ class PdfFrame(wx.Panel):
         """输入框事件函数"""
         self.text = evt.GetString()
 
-    def OnclickChooseDir(self):
+    def OnclickChooseDir(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -137,14 +137,14 @@ class PdfFrame(wx.Panel):
             self.label_pwd.SetValue(self.path)
         print(self.path)
 
-    def OnclickConfirm(self):
+    def OnclickConfirm(self, evt):
         """鼠标确认"""
         if self.text:
             self.path = self.text
         self.event = FilePDFProcessing(self.path)
         self.event.MergePDF()
 
-    def OnclickClear(self):
+    def OnclickClear(self, evt):
         """清除框架内容"""
         self.label_pwd.Clear()
 
@@ -215,7 +215,7 @@ class FileSearchFrame(wx.Panel):
         """输入框事件函数"""
         pass
 
-    def OnclickChooseDir(self):
+    def OnclickChooseDir(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -224,10 +224,10 @@ class FileSearchFrame(wx.Panel):
             self.label_path_wd.SetValue(self.path)
         print(self.path)
 
-    def OnclickClearTar(self):
+    def OnclickClearTar(self, evt):
         self.label_target_wd.Clear()
 
-    def OnclickConfirm(self):
+    def OnclickConfirm(self, evt):
 
         """鼠标确认"""
         label_path_wd_text = self.label_path_wd.GetValue().strip()
@@ -266,7 +266,7 @@ class FileSearchFrame(wx.Panel):
             self.event.run()
             print('运行结束')
 
-    def OnclickClear(self):
+    def OnclickClear(self, evt):
         """清除框架内容"""
         self.label_path_wd.Clear()
 
@@ -357,7 +357,7 @@ class FileCopyFrame(wx.Panel):
         """输入框事件函数"""
         pass
 
-    def OnclickChooseDir(self):
+    def OnclickChooseDir(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -365,7 +365,7 @@ class FileCopyFrame(wx.Panel):
             path = dlg.GetPath()
             self.label_path_wd.SetValue(path)
 
-    def OnclickChooseDir2(self):
+    def OnclickChooseDir2(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -373,14 +373,14 @@ class FileCopyFrame(wx.Panel):
             path = dlg.GetPath()
             self.label_target_path_wd.SetValue(path)
 
-    def OnclickChooseTar(self):
+    def OnclickChooseTar(self, evt):
         dlg = wx.FileDialog(None, u'请选择文件：', pos=(20, 20), size=(100, -1),
                             style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self.label_ref_wd.SetValue(path)
 
-    def OnclickClear(self):
+    def OnclickClear(self, evt):
         """清除框架内容"""
         self.label_path_wd.Clear()
         self.label_target_path_wd.Clear()
@@ -395,7 +395,7 @@ class FileCopyFrame(wx.Panel):
         if label_text == self.choice[1]:
             self.search_type = 1
 
-    def OnclickConfirm(self):
+    def OnclickConfirm(self, evt):
 
         """鼠标确认"""
         label_path_wd_text = self.label_path_wd.GetValue().strip()
@@ -525,7 +525,7 @@ class FileComparedFrame(wx.Panel):
         """输入框事件函数"""
         pass
 
-    def OnclickChooseDir(self):
+    def OnclickChooseDir(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择对比路径1：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -533,7 +533,7 @@ class FileComparedFrame(wx.Panel):
             path = dlg.GetPath()
             self.label_path1_wd.SetValue(path)
 
-    def OnclickChooseDir2(self):
+    def OnclickChooseDir2(self, evt):
         """路径选择"""
         dlg = wx.DirDialog(None, u'请选择对比路径2：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
@@ -541,21 +541,21 @@ class FileComparedFrame(wx.Panel):
             path = dlg.GetPath()
             self.label_path2_wd.SetValue(path)
 
-    def OnclickChooseSaveS(self):
+    def OnclickChooseSaveS(self, evt):
         dlg = wx.DirDialog(None, u'请选择路径一相同文件保存的路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self.label_saveP1_wd.SetValue(path)
 
-    def OnclickChooseSaveD(self):
+    def OnclickChooseSaveD(self, evt):
         dlg = wx.DirDialog(None, u'请选择路径二相同文件保存的路径：', pos=(20, 20), size=(100, -1),
                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self.label_saveP2_wd.SetValue(path)
 
-    def OnclickClear(self):
+    def OnclickClear(self, evt):
         """清除框架内容"""
         self.label_path1_wd.Clear()
         self.label_path2_wd.Clear()
@@ -567,7 +567,7 @@ class FileComparedFrame(wx.Panel):
     #     if label_text == self.choice[1]:
     #         self.search_type = 1
 
-    def OnclickConfirm(self):
+    def OnclickConfirm(self, evt):
 
         """鼠标确认"""
         label_path_wd_text = self.label_path1_wd.GetValue().strip()
@@ -757,22 +757,22 @@ class MainFrame(wx.Frame):
 
         self._mgr.Update()
 
-    def OnSwitchExcel(self):
+    def OnSwitchExcel(self, evt):
         """Excel合并"""
         self.OnSwitch(0)
 
-    def OnSwitchPdf(self):
+    def OnSwitchPdf(self, evt):
         """PDF合并"""
         self.OnSwitch(1)
 
-    def OnSwitchFileSearch(self):
+    def OnSwitchFileSearch(self, evt):
         """文件搜索"""
         self.OnSwitch(2)
 
-    def OnSwitchFileCopy(self):
+    def OnSwitchFileCopy(self, evt):
         self.OnSwitch(3)
 
-    def OnSwitchFileCompared(self):
+    def OnSwitchFileCompared(self, evt):
         self.OnSwitch(4)
 
 
