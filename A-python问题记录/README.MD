@@ -1,6 +1,6 @@
 ### 1.python gui打包,弹出缺少mkl_intel_thread.dll错误
 * 解决方法：
-复制以下dll文件至exe同级目录
+*。复制以下dll文件至exe同级目录
 libiomp5md.dll
 mkl_avx.dll
 mkl_avx2.dll
@@ -22,3 +22,4 @@ mkl_vml_p4.dll
 mkl_vml_p4m.dll
 mkl_vml_p4m2.dll
 mkl_vml_p4m3.dll
+。*
