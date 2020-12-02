@@ -1,595 +1,789 @@
-# ！/usr/bin/env python
-# @Time     :2020/11/8 21:11
-# @Author   :IronJoe
-# @Site     :
-# @File     :OfficeAutomation.py
-# @Software :PyCharm
+# -*- coding: utf-8 -*-
 
-import glob
 import os
-import re
-import shutil
-import time
+import sys
 
-import xlrd  # 用于读取数据
-from PyPDF2 import PdfFileReader
-from PyPDF2 import PdfFileWriter
-from openpyxl import Workbook  # 用于写入数据，支持大型数据写入
-from tqdm import tqdm
+import win32api
+import wx
+import wx.lib.agw.aui as aui
+import wx.lib.inspection
+import Img_source
+
+from OfficeAutomation import FileExcelProcessing
+from OfficeAutomation import FilePDFProcessing
+from OfficeAutomation import FileSearch
+from OfficeAutomation import FileCopy
+from OfficeAutomation import FileCompared
+
+APP_TITLE = u'办公自动化'
+
+class ExcelFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
+
+    def __init__(self, parent):
+
+        wx.Panel.__init__(self, parent)
+
+        self.title = wx.StaticText(self, label=u'办公自动化-Excel合并')  # 单页标题
+        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
+
+        # 输入框控件
+        self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_pwd.Bind(wx.EVT_TEXT, self.EvtText)
+        HSizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd.Add(self.label_path, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.label_pwd, proportion=1, flag=wx.ALL, border=5)
+
+        # 按钮
+        self.btn_cd = wx.Button(self, label=u'路径选择', pos=(350, 50), size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_confirm = wx.Button(self, label=u'确认', size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self, label=u'清除', size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        HSizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_btn.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        HSizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        HSizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+
+        VSizer_all = wx.BoxSizer(wx.VERTICAL)
+        VSizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=20)
+        VSizer_all.Add(HSizer_pwd, proportion=0, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=45)
+        VSizer_all.Add(HSizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=45)
+        self.SetSizer(VSizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        self.text = evt.GetString()
+
+    def OnClose(self, evt):
+        """关闭窗口事件函数"""
+
+        dlg = wx.MessageDialog(None, u'确定要关闭本窗口？', u'操作提示', wx.YES_NO | wx.ICON_QUESTION)
+        if dlg.ShowModal() == wx.ID_YES:
+            self.Destroy()
+
+    def OnclickChooseDir(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_pwd.SetValue(self.path)
+            print(self.path)
+
+    def OnclickConfirm(self, evt):
+        """鼠标确认"""
+        if self.text:
+            self.path = self.text
+        self.event = FileExcelProcessing(self.path)
+        self.event.run()
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_pwd.Clear()
 
 
-class FileProcessing:
-    """
-    根据提供的关键字进行文件查找
-    """
+class PdfFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
 
-    def __init__(self, origin_folder_path):
-        """
-        :param origin_folder_path:
-        """
+    def __init__(self, parent):
 
-        self.origin_folder_path = origin_folder_path
+        wx.Panel.__init__(self, parent)
 
-        struct_time = time.localtime()  # 元组格式
-        self.last_time = time.strftime('%Y-%m-%d', struct_time)  # 格式化时间
+        self.title = wx.StaticText(self, label=u'办公自动化-pdf合并')  # 单页标题
+        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
 
-    @staticmethod
-    def file_without_extension(folder_path1):
-        """
-        返回无拓展名的文件列表，静态方法，便于使用遍历
-        :param folder_path1:
-        :return:
-        """
-        # 遍历文件夹
-        file_list = glob.glob('%s/*' % folder_path1)
-        need_file_list = []
-        for file in file_list:
-            (filename, extension) = os.path.splitext(file)
-            if not extension:
-                if not os.path.isdir(filename):
-                    need_file_list.append(filename)
-        need_file_list.sort()
-        return need_file_list
+        # 输入框控件
+        self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_pwd.Bind(wx.EVT_TEXT, self.EvtText)
+        HSizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd.Add(self.label_path, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.label_pwd, proportion=1, flag=wx.ALL, border=5)
 
-    @staticmethod
-    def file_only_type(folder_path3, extent_name):
-        """
-        返回有拓展名的文件列表，静态方法，便于使用遍历，兼容大小写
-        :param folder_path3:
-        :param extent_name:
-        :return:
-        """
-        only_type_file_list = []
-        file_list = glob.glob(r'{}/*'.format(folder_path3))
-        for file in file_list:
-            (filename, extension) = os.path.splitext(file)
-            if extension.lower() == '.' + extent_name.lower():
-                only_type_file_list.append(file)
-        return only_type_file_list
+        # 按钮
+        self.btn_cd = wx.Button(self, label=u'路径选择', pos=(350, 50), size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_confirm = wx.Button(self, label=u'确认', size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self, label=u'清除', size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
 
-    @staticmethod
-    def file_all_type(folder_path2):
-        """
-        返回所有类型文件的列表，静态方法，便于使用遍历
-        :param folder_path2:
-        :return:
-        """
-        file_list = glob.glob('%s/*' % folder_path2)
-        need_file_list = []
-        for i in file_list:
-            if os.path.isdir(i):
-                pass
-            else:
-                need_file_list.append(i)
-        need_file_list.sort()
-        return need_file_list
+        HSizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_btn.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        HSizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=5)
+        HSizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=5)
 
-    @staticmethod
-    def auto_save_file(file):
+        VSizer_all = wx.BoxSizer(wx.VERTICAL)
+        VSizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=20)
+        VSizer_all.Add(HSizer_pwd, proportion=0, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=45)
+        VSizer_all.Add(HSizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=45)
+        self.SetSizer(VSizer_all)
 
-        directory, file_name = os.path.split(file)
-        filename, extension= os.path.splitext(file)
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        self.text = evt.GetString()
 
-        if extension:
-            file_name = re.split(r'[\\/]', filename)[-1]
+    def OnclickChooseDir(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_pwd.SetValue(self.path)
+        print(self.path)
+
+    def OnclickConfirm(self, evt):
+        """鼠标确认"""
+        if self.text:
+            self.path = self.text
+        self.event = FilePDFProcessing(self.path)
+        self.event.MergePDF()
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_pwd.Clear()
+
+
+class FileSearchFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
+
+    def __init__(self, parent):
+
+        wx.Panel.__init__(self, parent)
+
+        self.title = wx.StaticText(self, label=u'办公自动化-文件搜索')  # 单页标题
+        self.label_path = wx.StaticText(self, label=u'搜索路径名')  # 固定
+        self.label_target = wx.StaticText(self, label=u'搜索关键词')
+        self.label_extent = wx.StaticText(self, label=u'文件扩展名')
+
+        # 输入框控件
+        self.label_path_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_path_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_target_wd = wx.TextCtrl(self, name='TC02', style=wx.TE_LEFT)
+        self.label_target_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_extent_wd = wx.TextCtrl(self, name='TC03', style=wx.TE_LEFT)
+        self.label_extent_wd.Bind(wx.EVT_TEXT, self.EvtText)
+
+        self.btn_cd = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_target = wx.Button(self, label=u'清除关键词', size=(100, 25))
+        self.btn_target.Bind(wx.EVT_BUTTON, self.OnclickClearTar)
+        self.scores = ['All', 'None', 'txt', 'doc', 'excel']
+        self.btn_extent = wx.Choice(self, choices=self.scores, size=(100, 25))
+        self.btn_extent.Bind(wx.EVT_CHOICE, self.OnclickChooseExtent)
+        self.btn_extent.SetSelection(0)
+
+        HSizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd.Add(self.label_path, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.label_path_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        HSizer_pwd1 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd1.Add(self.label_target, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.label_target_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.btn_target, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        HSizer_pwd2 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd2.Add(self.label_extent, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd2.Add(self.label_extent_wd, proportion=1, flag=wx.ALL, border=5)
+        self.label_extent_wd.SetValue('All')
+        HSizer_pwd2.Add(self.btn_extent, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+
+        # 按钮
+        self.btn_confirm = wx.Button(self, label=u'确认', size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self, label=u'清除路径', size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        HSizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=25)
+        HSizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=25)
+
+        VSizer_all = wx.BoxSizer(wx.VERTICAL)
+        VSizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=10)
+        VSizer_all.Add(HSizer_pwd, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=20)
+        VSizer_all.Add(HSizer_pwd1, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=20)
+        VSizer_all.Add(HSizer_pwd2, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=20)
+        VSizer_all.Add(HSizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=10)
+        self.SetSizer(VSizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        pass
+
+    def OnclickChooseDir(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+            self.label_path_wd.SetValue(self.path)
+        print(self.path)
+
+    def OnclickClearTar(self, evt):
+        self.label_target_wd.Clear()
+
+    def OnclickConfirm(self, evt):
+
+        """鼠标确认"""
+        label_path_wd_text = self.label_path_wd.GetValue().strip()
+        label_target_wd_text = self.label_target_wd.GetValue().strip()
+        label_extent_wd_text = self.label_extent_wd.GetValue().strip()
+
+        label_path_wd_flag = 0
+        label_target_wd_flag = 0
+        label_extent_wd_flag = 0
+
+        if not os.path.isdir(label_path_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的路径', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            extension=''
+            label_path_wd_flag = 1
 
-        while os.path.isfile(file):
-            pattern = '(\d+)\)'
-            if re.search(pattern, file_name) is None:
-                file_name = file_name+r'(0)'
-            else:
-                current_number = int(re.findall(pattern, file_name)[-1])
-                new_number = current_number + 1
-                file_name = file_name.replace(f'({current_number})', f'({new_number})')
-            file_new = os.path.join(directory + os.sep + file_name) +extension
-            return file_new
-
-    def file_to_txt(self, list_file, path=None):
-        """
-        如果最终返回的列表有内容，文件保存
-        :param path:
-        :param list_file:
-        :return:
-        """
-        if not path:
-            file_path = r'目标文件列表-%s.txt' % self.last_time
+        if not label_target_wd_text:
+            dlg = wx.MessageDialog(None, u'请输入正确的关键词', u'关键词内容为空', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            file_path = r'%s/目标文件列表-%s.txt' % (path, self.last_time)
-        if len(list_file):
-            with open(file_path, 'a+', encoding='utf-8') as fh:
-                for i in list_file:
-                    fh.write(i + '\n')
+            label_target_wd_flag = 1
 
-    def data_clear(self, path=None):
-
-        # 数据清洗
-
-        if not path:
-            file_path = r'目标文件列表-%s.txt' % self.last_time
+        if not label_extent_wd_text:
+            dlg = wx.MessageDialog(None, u'请输入正确的拓展名', u'拓展名内容为空', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            file_path = r'%s/目标文件列表-%s.txt' % (path, self.last_time)
+            label_extent_wd_flag = 1
 
-        with open(file_path, 'w', encoding='utf-8') as fh:
-            fh.write('')
+        all_flag = label_path_wd_flag + label_target_wd_flag + label_extent_wd_flag
+        if all_flag == 3:
+            print('开始运行')
+            self.event = FileSearch(label_path_wd_text, label_target_wd_text, label_extent_wd_text)
+            self.event.run()
+            print('运行结束')
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_path_wd.Clear()
+
+    def OnclickChooseExtent(self, evt):
+        self.extent_text = evt.GetString()
+        self.label_extent_wd.SetValue(self.extent_text)
 
 
-class FileCopy(FileProcessing):
-    """
-    version 1.0
-    已有功能
-    1.精确匹配复制数据
-    2.模糊匹配
-    3.根据类型搜索
+class FileCopyFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
 
-    待加入：
-    1.大小写忽略
-    2.类型忽略
-    3.同名文件处理
+    def __init__(self, parent):
 
-    BUG:
-    1.input 的对象为字符串
-    """
+        wx.Panel.__init__(self, parent)
 
-    def __init__(self, origin_folder_path, destination_folder1, file_ref1, file_extent_name, s_type=0):
-        """
+        self.title = wx.StaticText(self, label=u'办公自动化-文件复制')  # 单页标题
+        self.label_path = wx.StaticText(self, label=u'搜索路径名')  # 固定
+        self.label_target_path = wx.StaticText(self, label=u'保存的位置')
+        self.label_ref = wx.StaticText(self, label=u'参考的文件')
+        self.label_extent = wx.StaticText(self, label=u'文件扩展名')
 
-        :param origin_folder_path:
-        :param destination_folder1:
-        :param file_ref1:
-        :param s_type:
-        """
-        super().__init__(origin_folder_path)
-        self.destination_path = destination_folder1
-        self.file_ref = file_ref1
-        self.search_type = s_type
-        self.file_extent = file_extent_name
+        # 输入框控件
+        self.label_path_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_path_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_target_path_wd = wx.TextCtrl(self, name='TC02', style=wx.TE_LEFT)
+        self.label_target_path_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_ref_wd = wx.TextCtrl(self, name='TC03', style=wx.TE_LEFT)
+        self.label_ref_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_extent_wd = wx.TextCtrl(self, name='TC04', style=wx.TE_LEFT)
+        self.label_extent_wd.Bind(wx.EVT_TEXT, self.EvtText)
 
-    def search_flag(self, str1, str_list):
-        """
-        精确匹配或模糊匹配，0精确匹配名字
-        :param str1:
-        :param str_list: 匹配的字符串列表
-        :return: copy_flag
-        """
-        copy_flag = 0
-        if self.search_type == 1:
-            for i in str_list:
-                if re.findall(r'.*%s.*' % i.strip(), str1):
-                    copy_flag = 1
-        if not self.search_type:
-            if str1 in str_list:
-                copy_flag = 1
-        return copy_flag
+        self.btn_cd = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_cd2 = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd2.Bind(wx.EVT_BUTTON, self.OnclickChooseDir2)
+        self.btn_target = wx.Button(self, label=u'文件选择', size=(100, 25))
+        self.btn_target.Bind(wx.EVT_BUTTON, self.OnclickChooseTar)
+        self.scores = ['All', 'None', 'txt', 'doc', 'excel']
+        self.btn_extent = wx.Choice(self, choices=self.scores, size=(100, 25))
+        self.btn_extent.Bind(wx.EVT_CHOICE, self.OnclickChooseExtent)
+        self.btn_extent.SetSelection(0)
 
-    def get_need_list(self):
-        """
-        需要的文件列表返回
-        :return:
-        """
-        with open(self.file_ref, 'r', encoding='UTF-8-sig') as f:  # 去除\ufeff
-            filename_list = []
-            for i in f:
-                filename_list.append(i.strip())
-        return filename_list
+        self.choice = ['精确匹配', '模糊匹配']
+        self.btn_label_type = wx.Choice(self, choices=self.choice, size=(100, 25))
+        self.btn_label_type.Bind(wx.EVT_CHOICE, self.OnclickChooseLabelType)
+        self.btn_label_type.SetSelection(0)
+        self.search_type = 0
 
-    def single_file_copy(self, folder_path2, file_need_list):
+        HSizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd.Add(self.label_path, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.label_path_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=0)
+        HSizer_pwd1 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd1.Add(self.label_ref, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.label_ref_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.btn_target, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        HSizer_pwd2 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd2.Add(self.label_extent, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd2.Add(self.label_extent_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd2.Add(self.btn_extent, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        self.label_extent_wd.SetValue('All')
+        HSizer_pwd3 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd3.Add(self.label_target_path, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd3.Add(self.label_target_path_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd3.Add(self.btn_cd2, proportion=0, flag=wx.ALIGN_CENTER, border=10)
 
-        if self.file_extent == 'None':
-            file_list = self.file_without_extension(folder_path2)
+        # 按钮
+        self.btn_confirm = wx.Button(self, label=u'确认', size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self, label=u'清除路径', size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
 
-        elif self.file_extent == 'All':
-            file_list = self.file_all_type(folder_path2)
+        HSizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=20)
+        HSizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=20)
 
+        VSizer_all = wx.BoxSizer(wx.VERTICAL)
+        VSizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=7)
+        VSizer_all.Add(HSizer_pwd, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd3, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd1, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd2, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=10)
+        self.SetSizer(VSizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        pass
+
+    def OnclickChooseDir(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_path_wd.SetValue(path)
+
+    def OnclickChooseDir2(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择一个路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_target_path_wd.SetValue(path)
+
+    def OnclickChooseTar(self, evt):
+        dlg = wx.FileDialog(None, u'请选择文件：', pos=(20, 20), size=(100, -1),
+                            style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_ref_wd.SetValue(path)
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_path_wd.Clear()
+        self.label_target_path_wd.Clear()
+        self.label_ref_wd.Clear()
+
+    def OnclickChooseExtent(self, evt):
+        self.extent_text = evt.GetString()
+        self.label_extent_wd.SetValue(self.extent_text)
+
+    def OnclickChooseLabelType(self, evt):
+        label_text = evt.GetString()
+        if label_text == self.choice[1]:
+            self.search_type = 1
+
+    def OnclickConfirm(self, evt):
+
+        """鼠标确认"""
+        label_path_wd_text = self.label_path_wd.GetValue().strip()
+        label_tar_path_wd_text = self.label_target_path_wd.GetValue().strip()
+        label_ref_wd_text = self.label_ref_wd.GetValue().strip()
+        label_extent_wd_text = self.label_extent_wd.GetValue().strip()
+
+        label_path_wd_flag = 0
+        label_tar_path_wd_flag = 0
+        label_ref_wd_flag = 0
+        label_extent_wd_flag = 0
+
+        if not os.path.isdir(label_path_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的搜索路径', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            file_list = self.file_only_type(folder_path2, self.file_extent)
+            label_path_wd_flag = 1
 
-        file_find_list = []
-
-        for file in file_list:
-            # 异常处理，解码处理
-            (filename, extension) = os.path.splitext(file)
-
-            filename = re.split(r'[\\/]', filename)[-1]
-
-            if self.search_flag(filename, file_need_list):
-                try:
-                    shutil.copy2(file, self.destination_path)
-                except shutil.SameFileError:
-                    (path, filename) = os.path.split(file)
-                    new_file = os.path.join(self.destination_path,filename)
-                    # print(new_file)
-                    file_new_name = self.auto_save_file(new_file)
-                    shutil.copy2(file, file_new_name)
-                file_find_list.append(file)
-
-        self.file_to_txt(file_find_list, self.destination_path)  # txt文件输出
-
-    def copy_file(self, folder_path1, file_need_list):
-        """
-
-        :param folder_path1:
-        :param file_need_list:
-        :return:
-        """
-        self.single_file_copy(folder_path1, file_need_list)
-        list_dir = os.listdir(folder_path1)  # 起始位置所有文件
-        for file_ in list_dir:
-            file_path = os.path.join(folder_path1, file_)
-            if os.path.isdir(file_path):
-                self.copy_file(file_path, file_need_list)
-
-    def run(self):
-
-        start_time = time.perf_counter()
-
-        self.data_clear(self.destination_path)
-
-        file_need_list = self.get_need_list()
-        print(file_need_list)
-
-        self.copy_file(self.origin_folder_path, file_need_list)
-
-        ending_time = time.perf_counter()
-
-        print('\n')
-        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
-
-
-class FileCompared(FileProcessing):
-    """
-    对两个文件夹内的文件进行对比
-    """
-
-    def __init__(self,start_folder1=None, start_folder2=None, tar_folder1=None, tar_folder2=None):
-        self.start_folder_path1 = start_folder1
-        self.start_folder_path2 = start_folder2
-        self.tar_folder_path1 = tar_folder1
-        self.tar_folder_path2 = tar_folder2
-
-    @staticmethod
-    def cmp_file(f1, f2):
-        """
-        两个文件对比,二进制法打开对比
-        :param f1:
-        :param f2:
-        :return:
-        """
-        st1 = os.stat(f1)
-        st2 = os.stat(f2)
-
-        # 比较两个文件的大小
-        if st1.st_size != st2.st_size:
-            return False
-
-        buf_size = 8 * 1024
-        # 二进制方法打开数据
-        with open(f1, 'rb') as fp1, open(f2, 'rb') as fp2:
-            while True:
-                b1 = fp1.read(buf_size)  # 读取指定大小的数据进行比较
-                b2 = fp2.read(buf_size)
-
-                if b1 != b2:
-                    return False
-                if not b1:  # 数据读取完毕，仍然没有不同
-                    return True
-
-    # 读取两个文件的文件进行对比排序
-
-    def file_move(self, f1, f2):
-        # 相同文件剪切
-        shutil.move(f1, self.tar_folder_path1)
-        shutil.move(f2, self.tar_folder_path2)
-
-    def run(self):
-        start_time = time.perf_counter()
-
-        f_list1 = self.file_all_type(self.start_folder_path1)
-
-        f_list2 = self.file_all_type(self.start_folder_path2)
-
-        for i in range(len(f_list1)):
-            print(i)
-            if self.cmp_file(f_list1[i], f_list2[i]):
-                self.file_move(f_list1[i], f_list2[i])
-
-        ending_time = time.perf_counter()
-
-        print('\n')
-        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
-
-
-class FileExcelProcessing(FileProcessing):
-
-    def __init__(self, origin_folder_path):
-        super().__init__(origin_folder_path)
-
-    def get_excel(self, folder_path1):  # 获取要合并的所有excel表格
-
-        all_excel_1 = self.file_only_type(folder_path1, 'xls')  # 列出文件夹下所有的xls文件
-        all_excel_2 = self.file_only_type(folder_path1, 'xlsx')
-        all_excel = all_excel_1 + all_excel_2
-
-        if len(all_excel) == 0:
-            pass
+        if not os.path.isdir(label_tar_path_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的保存路径', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            return all_excel
+            label_tar_path_wd_flag = 1
 
-    @staticmethod
-    def open_excel(file_name):  # 打开Excel文件
-
-        fh = xlrd.open_workbook(file_name)
-
-        return fh
-
-    @staticmethod
-    def get_sheet(fh):
-        """
-        获取excel文件下的所有sheet
-        :return:
-        """
-        sheets = fh.sheets()
-        return sheets
-
-    @staticmethod
-    def get_sheetrow_num(sheet):  # 获取sheet下有多少行数据
-        return sheet.nrows
-
-    @staticmethod
-    def get_sheet_data(sheet, row):
-        """
-        # 获取sheet下的数据
-        :param sheet:
-        :param row:
-        :return:
-        """
-        all_data = []
-        header = None
-        for i in range(row):
-            if i == 0:
-                header = sheet.row_values(i)
-            else:
-                values = sheet.row_values(i)
-                all_data.append(values)
-        return all_data, header
-
-    @staticmethod
-    def deduplication(list_):
-        """
-        # 数据去重
-        :param list_:
-        :return:
-        """
-        list_2 = []
-        for i in list_:
-            if i not in list_2:
-                list_2.append(i)
-        return list_2
-
-    def data_extraction(self):
-
-        all_excel = self.get_excel(self.origin_folder_path)
-        all_data = []  # 用于保存合并的所有行的数据
-        header = ''
-        for excel in tqdm(all_excel, '开始数据提取'):  # 下面开始文件数据的获取
-            fh = self.open_excel(excel)  # 打开文件
-            sheet = self.get_sheet(fh)[0]
-            rows = self.get_sheetrow_num(sheet)  # 获取一个sheet下的所有的数据的行数
-            for row in range(2, rows + 1):
-                all_sheet_data, header = self.get_sheet_data(sheet, row)
-                if row == rows:
-                    for i in range(len(all_sheet_data)):
-                        all_data.append(all_sheet_data[i])  # 把每一行作为列表的内容拆出加入大列表
-        all_data.insert(0, header)  # 表头写入
-        all_data = self.deduplication(all_data)  # 去重
-        return all_data
-
-    def data_to_excel(self, data):
-        """
-        下面开始文件数据的写入
-        :param data:
-        :return:
-        """
-
-        new_excel = self.origin_folder_path + "合并完成_{}.xlsx".format(self.last_time)  # 新建的excel文件名字
-        fh1 = Workbook()  # 新建一个excel表
-        new_sheet = fh1.active  # 第一张工作表必用
-        # new_sheet2 = fh1.create_sheet()#后面再使用
-
-        for row_num, row_data in enumerate(data):
-            new_sheet.append(row_data)
-
-        fh1.save(new_excel)  # 关闭该excel表
-
-    def run(self):
-
-        start_time = time.perf_counter()
-
-        all_data = self.data_extraction()
-
-        self.data_to_excel(all_data)
-
-        print("文件合并成功,请查看“" + self.origin_folder_path + "”目录下的test.xlsx文件！")
-
-        ending_time = time.perf_counter()
-
-        print('\n')
-        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
-
-
-class FileSearch(FileExcelProcessing):
-
-    def __init__(self, origin_folder_path, target_text, file_extent_name):
-        """
-        file_extent = 'N' or 'n'时，支持搜索无后缀文件
-        file_extent = 'A' or 'a'时，支持全文件搜索
-        :param origin_folder_path:
-        :param target_text:
-        :param file_extent_name:
-        """
-        super().__init__(origin_folder_path)
-        self.target_content = target_text
-        self.file_extent = file_extent_name
-
-    def single_file_find(self, folder_path3):
-        """
-        单个文件夹内容寻找
-        :param folder_path3: 文件路径
-        :return:
-        """
-        if self.file_extent == 'None':
-            pass
-
-        if self.file_extent == 'All':
-            file_list = self.file_all_type(folder_path3)
-
+        if (not os.path.isfile(label_ref_wd_text)) or (label_ref_wd_text.split(r'.')[-1].lower() != 'txt'):
+            dlg = wx.MessageDialog(None, u'请输入正确的参考文件', u'参考文件为空或非txt格式文件', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            file_list = self.file_only_type(folder_path3, self.file_extent)
+            label_ref_wd_flag = 1
 
-        file_last_list = []
-
-        for file in file_list:
-            # 异常处理，解码处理
-            try:
-                with open(file, 'r') as fh:
-                    for each_line in fh:
-                        if self.target_content in each_line.strip():
-                            file_last_list.append(file)
-                            break
-            except Exception:
-                continue
-
-        self.file_to_txt(file_last_list)  # txt文件输出
-
-    def single_excel_find(self, folder_path5):
-        excel_list = self.get_excel(folder_path5)
-        if excel_list:
-            file_list = []
-            for excel_name in excel_list:
-                excel_ = xlrd.open_workbook(excel_name)
-                for sheet in excel_.sheets():
-                    num = sheet.nrows
-                    for i in range(num):
-                        if self.target_content in str(sheet.row_values(i)):
-                            file_list.append(excel_name)
-                            # print(excel_name)
-                            break
-            self.file_to_txt(file_list)
-
-    def find_file_content(self, folder_path4):
-        """
-        # 递归遍历文件夹内的文件夹对象
-        :param folder_path4:
-        :return:
-        """
-        if self.file_extent == 'excel':
-            self.single_excel_find(folder_path4)
-        elif self.file_extent == 'a':
-            self.single_excel_find(folder_path4)
-            self.single_file_find(folder_path4)
+        if not label_extent_wd_text:
+            dlg = wx.MessageDialog(None, u'请输入正确的拓展名', u'拓展名内容为空', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
         else:
-            self.single_file_find(folder_path4)
+            label_extent_wd_flag = 1
 
-        list_dir = os.listdir(folder_path4)  # 起始位置所有文件
-
-        for file_ in list_dir:
-            file_path = os.path.join(folder_path4, file_)
-            if os.path.isdir(file_path):
-                self.find_file_content(file_path)
-
-    def run(self):
-
-        start_time = time.perf_counter()
-
-        # 数据清洗
-        self.data_clear()
-
-        self.find_file_content(self.origin_folder_path)  # 主程序运行
-        ending_time = time.perf_counter()  # 程序运行时间
-
-        print('\n')
-        print('程序运行时间:%.3f' % (ending_time - start_time) + 's')
+        all_flag = label_path_wd_flag + label_tar_path_wd_flag + label_ref_wd_flag + label_extent_wd_flag
+        if all_flag == 4:
+            print('开始运行')
+            self.event = FileCopy(label_path_wd_text, label_tar_path_wd_text, label_ref_wd_text, label_extent_wd_text,
+                                  self.search_type)
+            self.event.run()
+            print('运行结束')
 
 
-class FilePDFProcessing(FileProcessing):
+class FileComparedFrame(wx.Panel):
+    """程序副窗口类，继承自wx.Panel"""
 
-    def __init__(self, origin_folder_path = None):
-        super().__init__(origin_folder_path)
+    def __init__(self, parent):
 
-    def MergePDF(self):
-        # 实例化写入对象
-        output = PdfFileWriter()
-        outputPages = 0
-        # 调用上一个函数获取全部文件的绝对路径
-        file_list = self.file_only_type(self.origin_folder_path, 'pdf')
+        wx.Panel.__init__(self, parent)
 
-        for pdf_file in file_list:
+        self.title = wx.StaticText(self, label=u'办公自动化-文件对比')  # 单页标题
+        self.label_path1 = wx.StaticText(self, label=u'对比路径一')  # 固定
+        self.label_path2 = wx.StaticText(self, label=u'对比路径二')
+        self.label_saveP1 = wx.StaticText(self, label=u'保存路径一')
+        self.label_saveP2 = wx.StaticText(self, label=u'保存路径二')
 
-            print("文件：%s" % pdf_file.split('\\')[-1], end=' ')
+        # 输入框控件
+        self.label_path1_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
+        self.label_path1_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_path2_wd = wx.TextCtrl(self, name='TC02', style=wx.TE_LEFT)
+        self.label_path2_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_saveP1_wd = wx.TextCtrl(self, name='TC03', style=wx.TE_LEFT)
+        self.label_saveP1_wd.Bind(wx.EVT_TEXT, self.EvtText)
+        self.label_saveP2_wd = wx.TextCtrl(self, name='TC04', style=wx.TE_LEFT)
+        self.label_saveP2_wd.Bind(wx.EVT_TEXT, self.EvtText)
 
-            # 读取PDF文件
-            pdf_reader = PdfFileReader(open(pdf_file, "rb"), strict=False)
-            # 获得源PDF文件中页面总数
-            pageCount = pdf_reader.getNumPages()
-            outputPages += pageCount
-            print("页数：%d" % pageCount)
-            # 分别将page添加到输出output中
-            for iPage in range(pageCount):
-                output.addPage(pdf_reader.getPage(iPage))
-        print("\n合并后的总页数:%d" % outputPages)
-        # 写入到目标PDF文件
-        print("PDF文件正在合并，请稍等......")
+        self.btn_cd = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd.Bind(wx.EVT_BUTTON, self.OnclickChooseDir)
+        self.btn_cd2 = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_cd2.Bind(wx.EVT_BUTTON, self.OnclickChooseDir2)
+        self.btn_saveCD1 = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_saveCD1.Bind(wx.EVT_BUTTON, self.OnclickChooseSaveS)
+        self.btn_saveCD2 = wx.Button(self, label=u'路径选择', size=(100, 25))
+        self.btn_saveCD2.Bind(wx.EVT_BUTTON, self.OnclickChooseSaveD)
 
-        new_pdf = self.origin_folder_path + "merge_{}.pdf".format(self.last_time)
+        # self.choice = ['精确匹配', '模糊匹配']
+        # self.btn_label_type = wx.Choice(self, choices=self.choice, size=(100, 25))
+        # self.btn_label_type.Bind(wx.EVT_CHOICE, self.OnclickChooseLabelType)
+        # self.btn_label_type.SetSelection(0)
+        # self.search_type = 0
 
-        with open(new_pdf, "wb") as outPutFile:
-            # 注意这里的写法和正常的上下文文件写入是相反的
-            output.write(outPutFile)
-        print("PDF文件合并完成")
+        HSizer_pwd = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd.Add(self.label_path1, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.label_path1_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd.Add(self.btn_cd, proportion=0, flag=wx.ALIGN_CENTER, border=0)
+        HSizer_pwd1 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd1.Add(self.label_saveP1, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.label_saveP1_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd1.Add(self.btn_saveCD1, proportion=0, flag=wx.ALIGN_CENTER, border=10)
+        HSizer_pwd2 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd2.Add(self.label_saveP2, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd2.Add(self.label_saveP2_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd2.Add(self.btn_saveCD2, proportion=0, flag=wx.ALIGN_CENTER, border=10)
 
-    @staticmethod
-    def SplitPDF(pdf_filename):
+        HSizer_pwd3 = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_pwd3.Add(self.label_path2, proportion=0, flag=wx.ALL, border=5)
+        HSizer_pwd3.Add(self.label_path2_wd, proportion=1, flag=wx.ALL, border=5)
+        HSizer_pwd3.Add(self.btn_cd2, proportion=0, flag=wx.ALIGN_CENTER, border=10)
 
-        pdf_reader = PdfFileReader(open(pdf_filename, "rb"), strict=False)
-        for page in range(pdf_reader.getNumPages()):
-            pdf_writer = PdfFileWriter()
-            pdf_writer.addPage(pdf_reader.getPage(page))
-            with open("分割后的PDF文件{}.pdf".format(page), "wb") as out:
-                pdf_writer.write(out)
+        # 按钮
+        self.btn_confirm = wx.Button(self, label=u'确认', size=(100, 25))
+        self.btn_confirm.Bind(wx.EVT_BUTTON, self.OnclickConfirm)
+        self.btn_clear = wx.Button(self, label=u'清除路径', size=(100, 25))
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.OnclickClear)
+
+        HSizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        HSizer_btn.Add(self.btn_confirm, proportion=0, flag=wx.ALIGN_CENTER, border=20)
+        HSizer_btn.Add(self.btn_clear, proportion=0, flag=wx.ALIGN_CENTER, border=20)
+
+        VSizer_all = wx.BoxSizer(wx.VERTICAL)
+        VSizer_all.Add(self.title, proportion=0, flag=wx.BOTTOM | wx.TOP | wx.ALIGN_CENTER, border=7)
+        VSizer_all.Add(HSizer_pwd, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd3, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd1, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_pwd2, proportion=0, flag=wx.ALIGN_CENTER | wx.RIGHT, border=25)
+        VSizer_all.Add(HSizer_btn, proportion=0, flag=wx.ALIGN_CENTER | wx.TOP, border=10)
+        self.SetSizer(VSizer_all)
+
+    # 三、调用局部变量并绑定事件
+    def EvtText(self, evt):
+        """输入框事件函数"""
+        pass
+
+    def OnclickChooseDir(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择对比路径1：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_path1_wd.SetValue(path)
+
+    def OnclickChooseDir2(self, evt):
+        """路径选择"""
+        dlg = wx.DirDialog(None, u'请选择对比路径2：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_path2_wd.SetValue(path)
+
+    def OnclickChooseSaveS(self, evt):
+        dlg = wx.DirDialog(None, u'请选择路径一相同文件保存的路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_saveP1_wd.SetValue(path)
+
+    def OnclickChooseSaveD(self, evt):
+        dlg = wx.DirDialog(None, u'请选择路径二相同文件保存的路径：', pos=(20, 20), size=(100, -1),
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.label_saveP2_wd.SetValue(path)
+
+    def OnclickClear(self, evt):
+        """清除框架内容"""
+        self.label_path1_wd.Clear()
+        self.label_path2_wd.Clear()
+        self.label_saveP1_wd.Clear()
+        self.label_saveP2_wd.Clear()
+
+    # def OnclickChooseLabelType(self, evt):
+    #     label_text = evt.GetString()
+    #     if label_text == self.choice[1]:
+    #         self.search_type = 1
+
+    def OnclickConfirm(self, evt):
+
+        """鼠标确认"""
+        label_path_wd_text = self.label_path1_wd.GetValue().strip()
+        label_tar_path_wd_text = self.label_path2_wd.GetValue().strip()
+        label_ref_wd_text = self.label_saveP1_wd.GetValue().strip()
+        label_extent_wd_text = self.label_saveP2_wd.GetValue().strip()
+
+        label_path_wd_flag = 0
+        label_tar_path_wd_flag = 0
+        label_ref_wd_flag = 0
+        label_extent_wd_flag = 0
+
+        if not os.path.isdir(label_path_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的对比路径一', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
+        else:
+            label_path_wd_flag = 1
+
+        if not os.path.isdir(label_tar_path_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的对比路径二', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
+        else:
+            label_tar_path_wd_flag = 1
+
+        if not os.path.isdir(label_ref_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的保存路径一', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
+        else:
+            label_ref_wd_flag = 1
+
+        if not os.path.isdir(label_extent_wd_text):
+            dlg = wx.MessageDialog(None, u'请输入正确的保存路径二', u'路径不正确', wx.YES_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                self.Destroy()
+        else:
+            label_extent_wd_flag = 1
+
+        all_flag = label_path_wd_flag + label_tar_path_wd_flag + label_ref_wd_flag + label_extent_wd_flag
+        if all_flag == 4:
+            print('开始运行')
+            self.event = FileCompared(label_path_wd_text, label_tar_path_wd_text, label_ref_wd_text,
+                                      label_extent_wd_text)
+            self.event.run()
+            print('运行结束')
 
 
-"""
-添加pdf文件搜索
-"""
+class MainFrame(wx.Frame):
+    """程序主窗口类，继承自wx.Frame"""
 
-if __name__ == '__main__':
-    folder_path = r'F:\001-程序学习\001-Python'
-    des_path = r'F:\001-程序学习\001-Python\000-学习\002-办公自动化'
-    # folder_path = r'F:\001-程序学习\001-Python\004-项目测试\pdftest'
+    id_open = wx.NewIdRef()
+    id_save = wx.NewIdRef()
+    id_quit = wx.NewIdRef()
 
-    file_ref = r'F:\001-程序学习\001-Python\000-学习\002-办公自动化\目标文件列表-2020-11-.txt'
+    id_help = wx.NewIdRef()
+    id_about = wx.NewIdRef()
 
-    test = FileSearch(folder_path, '块', 'a')
-    # test.MergePDF()
-    test.run()
+    def __init__(self, parent):
+        """构造函数"""
+
+        wx.Frame.__init__(self, parent, -1, APP_TITLE)
+        self.SetBackgroundColour(wx.Colour(224, 224, 224))
+        self.SetMaxSize((500, 400))
+        self.SetMinSize((500, 400))
+        self.Center()
+
+        if hasattr(sys, "frozen") and getattr(sys, "frozen") == "windows_exe":
+            exeName = win32api.GetModuleFileName(win32api.GetModuleHandle(None))
+            icon = wx.Icon(exeName, wx.BITMAP_TYPE_ICO)
+        else:
+            icon = Img_source.favicon.GetIcon()
+        self.SetIcon(icon)
+
+        self.tb1 = self._CreateToolBar()
+
+        # 分页面创建
+        panel_Excel = ExcelFrame(self)
+        panel_Pdf = PdfFrame(self)
+        panel_FileSearch = FileSearchFrame(self)
+        panel_FileCopy = FileCopyFrame(self)
+        panel_FileCompared = FileComparedFrame(self)
+
+        p_left = wx.Panel(self)
+        p_bottom = wx.Panel(self)
+
+        # 分页控制按钮创建
+        btn_excel = wx.Button(p_left, label=u'Excel合并', pos=(8, 20), size=(100, -1))
+        btn_excel.Bind(wx.EVT_BUTTON, self.OnSwitchExcel)
+        btn_pdf = wx.Button(p_left, label=u'Pdf合并', pos=(8, 50), size=(100, -1))
+        btn_pdf.Bind(wx.EVT_BUTTON, self.OnSwitchPdf)
+        brn_fileCopy = wx.Button(p_left, label=u'文件复制', pos=(8, 80), size=(100, -1))
+        brn_fileCopy.Bind(wx.EVT_BUTTON, self.OnSwitchFileCopy)
+        btn_fileSearch = wx.Button(p_left, label=u'文件搜索', pos=(8, 110), size=(100, -1))
+        btn_fileSearch.Bind(wx.EVT_BUTTON, self.OnSwitchFileSearch)
+        btn_FileCompared = wx.Button(p_left, label=u'文件对比', pos=(8, 140), size=(100, -1))
+        btn_FileCompared.Bind(wx.EVT_BUTTON, self.OnSwitchFileCompared)
+
+        self._mgr = aui.AuiManager()
+        self._mgr.SetManagedWindow(self)
+
+        # 工具条创建
+        self._mgr.AddPane(self.tb1,
+                          aui.AuiPaneInfo().Name("ToolBar1").Caption(u"工具条").ToolbarPane().Top().Row(0).Position(
+                              0).Floatable(False).CaptionVisible(False).Resizable(True)
+                          )
+        # 功能切换
+        self._mgr.AddPane(p_left,
+                          aui.AuiPaneInfo().Name("LeftPanel").Left().Layer(1).MinSize((100, -1)).Caption(
+                              u"功能切换区").CaptionVisible(False).Resizable(True)
+                          )
+
+        # 一功能区域
+        self._mgr.AddPane(panel_Excel,
+                          aui.AuiPaneInfo().Name("CenterPanelExcel").CenterPane().Show()
+                          )
+
+        # 二功能区域
+        self._mgr.AddPane(panel_Pdf,
+                          aui.AuiPaneInfo().Name("CenterPanelPdf").CenterPane().Hide()
+                          )
+
+        # 三功能区域
+        self._mgr.AddPane(panel_FileSearch,
+                          aui.AuiPaneInfo().Name("CenterPanelFileSearch").CenterPane().Hide()
+                          )
+
+        # 四功能区域
+        self._mgr.AddPane(panel_FileCopy,
+                          aui.AuiPaneInfo().Name("CenterPanelFileCopy").CenterPane().Hide()
+                          )
+
+        # 五功能区域
+        self._mgr.AddPane(panel_FileCompared,
+                          aui.AuiPaneInfo().Name("CenterPanelFileCompared").CenterPane().Hide()
+                          )
+
+        # 消息显示区域
+        self._mgr.AddPane(p_bottom,
+                          aui.AuiPaneInfo().Name("BottomPanel").Bottom().MinSize((-1, 80)).Caption(
+                              u"消息区").CaptionVisible(False).Resizable(True)
+                          )
+
+        self._mgr.Update()
+
+    def _CreateToolBar(self, d='H'):
+        """创建工具栏"""
+
+        bmp_open = Img_source.Open.GetBitmap()
+        bmp_save = Img_source.Save.GetBitmap()
+        bmp_help = Img_source.Copy.GetBitmap()
+        bmp_about = Img_source.About.GetBitmap()
+
+        if d.upper() in ['V', 'VERTICAL']:
+            tb = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
+                                agwStyle=aui.AUI_TB_TEXT | aui.AUI_TB_VERTICAL)
+        else:
+            tb = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, agwStyle=aui.AUI_TB_TEXT)
+        tb.SetToolBitmapSize(wx.Size(16, 16))
+
+        tb.AddSimpleTool(self.id_open, u'打开', bmp_open, u'打开文件')
+        tb.AddSimpleTool(self.id_save, u'保存', bmp_save, u'保存文件')
+        tb.AddSeparator()
+        tb.AddSimpleTool(self.id_help, u'帮助', bmp_help, u'帮助')
+        tb.AddSimpleTool(self.id_about, u'关于', bmp_about, u'关于')
+
+        tb.Realize()
+        return tb
+
+    def OnSwitch(self, ret_flag):
+        """切换信息显示窗口"""
+
+        p0 = self._mgr.GetPane('CenterPanelExcel')
+        p1 = self._mgr.GetPane('CenterPanelPdf')
+        p2 = self._mgr.GetPane('CenterPanelFileSearch')
+        p3 = self._mgr.GetPane('CenterPanelFileCopy')
+        p4 = self._mgr.GetPane('CenterPanelFileCompared')
+
+        p_list = [p0, p1, p2, p3, p4]
+
+        p_mode = p_list.pop(ret_flag)
+        p_mode.Show()
+
+        for i in p_list:
+            i.Hide()
+
+        self._mgr.Update()
+
+    def OnSwitchExcel(self, evt):
+        """Excel合并"""
+        self.OnSwitch(0)
+
+    def OnSwitchPdf(self, evt):
+        """PDF合并"""
+        self.OnSwitch(1)
+
+    def OnSwitchFileSearch(self, evt):
+        """文件搜索"""
+        self.OnSwitch(2)
+
+    def OnSwitchFileCopy(self, evt):
+        self.OnSwitch(3)
+
+    def OnSwitchFileCompared(self, evt):
+        self.OnSwitch(4)
+
+
+class MainApp(wx.App):
+    def OnInit(self):
+        self.SetAppName(APP_TITLE)
+        self.Frame = MainFrame(None)
+        self.Frame.Show()
+        return True
+
+
+if __name__ == "__main__":
+    app = MainApp()
+    # wx.lib.inspection.InspectionTool().Show()
+    app.MainLoop()
