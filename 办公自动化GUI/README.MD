@@ -14,5 +14,5 @@
 - [x] 图标二值化处理
 
 ### BUG
-* file-copy excel文件不能复制
+- [x] file-copy excel文件不能复制
 * file-search 生成的文件列表位置不对
