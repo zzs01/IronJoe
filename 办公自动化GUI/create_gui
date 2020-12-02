@@ -7,6 +7,7 @@ import win32api
 import wx
 import wx.lib.agw.aui as aui
 import wx.lib.inspection
+import Img_source
 
 from OfficeAutomation import FileExcelProcessing
 from OfficeAutomation import FilePDFProcessing
@@ -15,8 +16,6 @@ from OfficeAutomation import FileCopy
 from OfficeAutomation import FileCompared
 
 APP_TITLE = u'办公自动化'
-APP_ICON = r'gui\图标\favicon.ico'  # 图标
-
 
 class ExcelFrame(wx.Panel):
     """程序副窗口类，继承自wx.Panel"""
@@ -640,7 +639,7 @@ class MainFrame(wx.Frame):
             exeName = win32api.GetModuleFileName(win32api.GetModuleHandle(None))
             icon = wx.Icon(exeName, wx.BITMAP_TYPE_ICO)
         else:
-            icon = wx.Icon(APP_ICON, wx.BITMAP_TYPE_ICO)
+            icon = Img_source.favicon.GetIcon()
         self.SetIcon(icon)
 
         self.tb1 = self._CreateToolBar()
@@ -717,10 +716,10 @@ class MainFrame(wx.Frame):
     def _CreateToolBar(self, d='H'):
         """创建工具栏"""
 
-        bmp_open = wx.Bitmap(r'gui\图标\icon\Open.ico', wx.BITMAP_TYPE_ANY, )
-        bmp_save = wx.Bitmap(r'gui\图标\icon\Save.ico', wx.BITMAP_TYPE_ANY)
-        bmp_help = wx.Bitmap(r'gui\图标\icon\Copy.ico', wx.BITMAP_TYPE_ANY)
-        bmp_about = wx.Bitmap(r'gui\图标\icon\About.ico', wx.BITMAP_TYPE_ANY)
+        bmp_open = Img_source.Open.GetBitmap()
+        bmp_save = Img_source.Save.GetBitmap()
+        bmp_help = Img_source.Copy.GetBitmap()
+        bmp_about = Img_source.About.GetBitmap()
 
         if d.upper() in ['V', 'VERTICAL']:
             tb = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
