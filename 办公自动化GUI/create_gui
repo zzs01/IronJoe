@@ -812,7 +812,7 @@ class MainFrame(wx.Frame):
             rect = self.GetUpdateRegion().GetBox()
             dc.SetClippingRect(rect)
         dc.Clear()
-        bmp_img = Img_source.lufy.GetBitmap()
+        bmp_img = Img_source.new1.GetBitmap()
         # bmp = wx.Bitmap(bmp_img)
         dc.DrawBitmap(bmp_img, 0, 0)
 
@@ -826,7 +826,7 @@ class MainApp(wx.App):
 
 
 if __name__ == "__main__":
-    app = MainApp()
-    # app = MainApp(redirect=True, filename="debug.txt")
+    # app = MainApp()
+    app = MainApp(redirect=True, filename="debug.txt")
     # wx.lib.inspection.InspectionTool().Show() # 窗口的按钮显示等
     app.MainLoop()
