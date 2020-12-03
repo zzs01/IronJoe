@@ -17,6 +17,28 @@ from OfficeAutomation import FileCompared
 
 APP_TITLE = u'办公自动化'
 
+#将文本底色改为透明
+#第一步：将主事件中wx.StaticText全部换成TransparentStaticText
+#第二步：重现StaticText控件
+class TransparentStaticText(wx.StaticText):
+    def __init__(self, parent, id=wx.ID_ANY, label='', pos=wx.DefaultPosition, size=wx.DefaultSize,
+                 style=wx.TRANSPARENT_WINDOW, name='TransparentStaticText'):
+        wx.StaticText.__init__(self, parent, id, label, pos, size, style, name)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, lambda event: None)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+    def OnPaint(self, event):
+        bdc = wx.PaintDC(self)
+        dc = wx.GCDC(bdc)
+        font_face = self.GetFont()
+        font_color = self.GetForegroundColour()
+        dc.SetFont(font_face)
+        dc.SetTextForeground(font_color)
+        dc.DrawText(self.GetLabel(), 0, 0)
+    def OnSize(self, event):
+        self.Refresh()
+        event.Skip()
+
 class ExcelFrame(wx.Panel):
     """程序副窗口类，继承自wx.Panel"""
 
@@ -24,8 +46,8 @@ class ExcelFrame(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        self.title = wx.StaticText(self, label=u'办公自动化-Excel合并')  # 单页标题
-        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
+        self.title = TransparentStaticText(self, label=u'办公自动化-Excel合并')  # 单页标题
+        self.label_path = TransparentStaticText(self, label=u'请输入路径')  # 固定的文字
 
         # 输入框控件
         self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
@@ -93,8 +115,8 @@ class PdfFrame(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        self.title = wx.StaticText(self, label=u'办公自动化-pdf合并')  # 单页标题
-        self.label_path = wx.StaticText(self, label=u'请输入路径')  # 固定的文字
+        self.title = TransparentStaticText(self, label=u'办公自动化-pdf合并')  # 单页标题
+        self.label_path = TransparentStaticText(self, label=u'请输入路径')  # 固定的文字
 
         # 输入框控件
         self.label_pwd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
@@ -155,10 +177,10 @@ class FileSearchFrame(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        self.title = wx.StaticText(self, label=u'办公自动化-文件搜索')  # 单页标题
-        self.label_path = wx.StaticText(self, label=u'搜索路径名')  # 固定
-        self.label_target = wx.StaticText(self, label=u'搜索关键词')
-        self.label_extent = wx.StaticText(self, label=u'文件扩展名')
+        self.title = TransparentStaticText(self, label=u'办公自动化-文件搜索')  # 单页标题
+        self.label_path = TransparentStaticText(self, label=u'搜索路径名')  # 固定
+        self.label_target = TransparentStaticText(self, label=u'搜索关键词')
+        self.label_extent = TransparentStaticText(self, label=u'文件扩展名')
 
         # 输入框控件
         self.label_path_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
@@ -281,11 +303,11 @@ class FileCopyFrame(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        self.title = wx.StaticText(self, label=u'办公自动化-文件复制')  # 单页标题
-        self.label_path = wx.StaticText(self, label=u'搜索路径名')  # 固定
-        self.label_target_path = wx.StaticText(self, label=u'保存的位置')
-        self.label_ref = wx.StaticText(self, label=u'参考的文件')
-        self.label_extent = wx.StaticText(self, label=u'文件扩展名')
+        self.title = TransparentStaticText(self, label=u'办公自动化-文件复制')  # 单页标题
+        self.label_path = TransparentStaticText(self, label=u'搜索路径名')  # 固定
+        self.label_target_path = TransparentStaticText(self, label=u'保存的位置')
+        self.label_ref = TransparentStaticText(self, label=u'参考的文件')
+        self.label_extent = TransparentStaticText(self, label=u'文件扩展名')
 
         # 输入框控件
         self.label_path_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
@@ -303,7 +325,7 @@ class FileCopyFrame(wx.Panel):
         self.btn_cd2.Bind(wx.EVT_BUTTON, self.OnclickChooseDir2)
         self.btn_target = wx.Button(self, label=u'文件选择', size=(100, 25))
         self.btn_target.Bind(wx.EVT_BUTTON, self.OnclickChooseTar)
-        self.scores = ['All', 'None', 'txt', 'doc', 'excel']
+        self.scores = ['All', 'None', 'txt', 'doc', 'excel', 'pdf', 'dwg']
         self.btn_extent = wx.Choice(self, choices=self.scores, size=(100, 25))
         self.btn_extent.Bind(wx.EVT_CHOICE, self.OnclickChooseExtent)
         self.btn_extent.SetSelection(0)
@@ -451,11 +473,11 @@ class FileComparedFrame(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        self.title = wx.StaticText(self, label=u'办公自动化-文件对比')  # 单页标题
-        self.label_path1 = wx.StaticText(self, label=u'对比路径一')  # 固定
-        self.label_path2 = wx.StaticText(self, label=u'对比路径二')
-        self.label_saveP1 = wx.StaticText(self, label=u'保存路径一')
-        self.label_saveP2 = wx.StaticText(self, label=u'保存路径二')
+        self.title = TransparentStaticText(self, label=u'办公自动化-文件对比')  # 单页标题
+        self.label_path1 = TransparentStaticText(self, label=u'对比路径一')  # 固定
+        self.label_path2 = TransparentStaticText(self, label=u'对比路径二')
+        self.label_saveP1 = TransparentStaticText(self, label=u'保存路径一')
+        self.label_saveP2 = TransparentStaticText(self, label=u'保存路径二')
 
         # 输入框控件
         self.label_path1_wd = wx.TextCtrl(self, name='TC01', style=wx.TE_LEFT)
@@ -654,6 +676,14 @@ class MainFrame(wx.Frame):
         p_left = wx.Panel(self)
         p_bottom = wx.Panel(self)
 
+        panel_Excel.Bind(wx.EVT_ERASE_BACKGROUND,self.OnEraseBack)
+        panel_Pdf.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+        panel_FileSearch.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+        panel_FileCopy.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+        panel_FileCompared.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+        # p_left.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+        # p_bottom.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBack)
+
         # 分页控制按钮创建
         btn_excel = wx.Button(p_left, label=u'Excel合并', pos=(8, 20), size=(100, -1))
         btn_excel.Bind(wx.EVT_BUTTON, self.OnSwitchExcel)
@@ -774,6 +804,18 @@ class MainFrame(wx.Frame):
     def OnSwitchFileCompared(self, evt):
         self.OnSwitch(4)
 
+    # 背景图片设置
+    def OnEraseBack(self,event):
+        dc = event.GetDC()
+        if not dc:
+            dc = wx.ClientDC(self)
+            rect = self.GetUpdateRegion().GetBox()
+            dc.SetClippingRect(rect)
+        dc.Clear()
+        bmp_img = Img_source.lufy.GetBitmap()
+        # bmp = wx.Bitmap(bmp_img)
+        dc.DrawBitmap(bmp_img, 0, 0)
+
 
 class MainApp(wx.App):
     def OnInit(self):
@@ -785,5 +827,6 @@ class MainApp(wx.App):
 
 if __name__ == "__main__":
     app = MainApp()
-    # wx.lib.inspection.InspectionTool().Show()
+    # app = MainApp(redirect=True, filename="debug.txt")
+    # wx.lib.inspection.InspectionTool().Show() # 窗口的按钮显示等
     app.MainLoop()
