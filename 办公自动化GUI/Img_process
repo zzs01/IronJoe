@@ -12,7 +12,8 @@ path2 = r'打包\About.ico'
 path3 = r'打包\Copy.ico'
 path4 = r'打包\Open.ico'
 path5 = r'打包\Save.ico'
+path6 = r'new1.jpg'
 
-path_list = [path1,path2,path3,path4,path5]
+path_list = [path1,path2, path3, path4, path5, path6]
 for i in path_list:
     img2py.img2py(i,'Img_source.py','-a')
