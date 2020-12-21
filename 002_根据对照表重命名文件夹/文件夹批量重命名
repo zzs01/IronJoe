@@ -1,0 +1,37 @@
+# ！/usr/bin/env python
+# @Time     :2020/12/20 21:34
+# @Author   :IronJoe
+# @Site     :
+# @File     :001_文件夹批量重命名.py
+# @Software :PyCharm
+
+import os
+import glob
+import csv
+
+def csv_file_list(csv_file):
+    with open(csv_file, encoding='UTF-8-sig') as fp:
+        name_list = []
+        f_csv = csv.reader(fp)
+        for i in f_csv:
+            name_list.append(i)
+    return name_list
+
+def rename_path(dir_path,csv_file):
+
+    dir_list = glob.glob(dir_path + '/*')
+    for path in dir_list:
+        if os.path.isdir(path):
+            dir_first, dir_name = os.path.split(path)
+            for name in csv_file_list(csv_file):
+                if name[0] in dir_name:
+                    dir_name = dir_name.replace(name[0],name[1])
+                    new_path = os.path.join(dir_first,dir_name)
+                    os.rename(path, new_path)
+
+
+if __name__ == '__main__':
+
+    csv_file = r"F:\001-程序学习\001-Python\000-学习\002-办公自动化\001_小的程序\TEST\新建  Microsoft Excel Worksheet.csv"
+    dir_path = r"F:\001-程序学习\001-Python\000-学习\002-办公自动化\001_小的程序\TEST"
+    rename_path(dir_path,csv_file)
