@@ -1,0 +1,75 @@
+# ！/usr/bin/env python
+# @Time     :2020/12/31 12:35
+# @Author   :IronJoe
+# @Site     :
+# @File     :004_BOM垫片更新.py
+# @Software :PyCharm
+
+import csv
+import copy
+
+
+def csv_file_list(csv_file):
+    with open(csv_file) as fp:
+        name_list = []
+        f_csv = csv.reader(fp)
+        for i in f_csv:
+            name_list.append(i)
+    return name_list
+
+
+def replace_dp(list, n1, n2):
+    for i, data in enumerate(list):
+        if data[n1] == 'ASH4':
+            data1 = copy.deepcopy(data)
+            data2 = copy.deepcopy(data)
+            data3 = copy.deepcopy(data)
+
+            data[n2] = 0
+
+            data1[n1] = 'ASH405'
+            data1[n2] = int(data1[n2]) * 2
+
+            data2[n1] = 'ASH410'
+            data2[n2] = int(data2[n2]) * 2
+
+            data3[n1] = 'ASH420'
+
+            list.insert(i + 1, data1)
+            list.insert(i + 1, data2)
+            list.insert(i + 1, data3)
+        if data[n1] == 'ASH3':
+            data1 = copy.deepcopy(data)
+            data2 = copy.deepcopy(data)
+            data3 = copy.deepcopy(data)
+
+            data[n2] = 0
+
+            data1[n1] = 'ASH305'
+            data1[n2] = int(data1[n2]) * 2
+
+            data2[n1] = 'ASH310'
+            data2[n2] = int(data2[n2]) * 2
+
+            data3[n1] = 'ASH320'
+
+            list.insert(i + 1, data1)
+            list.insert(i + 1, data2)
+            list.insert(i + 1, data3)
+
+    return list
+
+
+def csv_file_write(list):
+    with open('修改后.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for i in list:
+            writer.writerow(i)
+
+
+if __name__ == '__main__':
+    csv_file = r"E:\work\012_工作日记\备份日记\202101\20210113\BOM更新\BL2BS12000_FXT01_BOM.csv"
+
+    get_list = csv_file_list(csv_file)
+    replace_list = replace_dp(get_list, 4, 6)
+    csv_file_write(replace_list)
