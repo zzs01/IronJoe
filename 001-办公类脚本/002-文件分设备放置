@@ -1,0 +1,31 @@
+# ！/usr/bin/env python
+# @Time     :2020/12/20 21:34
+# @Author   :IronJoe
+# @Site     :
+# @File     :001_文件夹批量重命名.py
+# @Software :PyCharm
+
+'''
+根据文件的名称提取相应长度的字符串作为设备名称
+'''
+
+import os
+import glob
+import shutil
+
+
+def path_create(st_path):
+    file_list = glob.glob(r'%s/*' % st_path)
+    for file in file_list:
+        if os.path.isfile(file):
+            other_name, file_ext_name = os.path.split(file)
+            file_name = file_ext_name[0:16]
+            folder_name = other_name + '\\' + file_name
+            if not os.path.exists(folder_name):
+                os.mkdir(folder_name)
+            shutil.move(file, folder_name)
+
+
+if __name__ == '__main__':
+    st_path = r"M:\BIW_Engineering\48_Rivian\MBRI-2003\020_Robot_Simulation\010_To_Simulation\03_VBS\01_BS"
+    path_create(st_path)
