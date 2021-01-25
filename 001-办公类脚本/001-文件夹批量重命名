@@ -1,0 +1,41 @@
+# ！/usr/bin/env python
+# @Time     :2020/12/20 21:34
+# @Author   :IronJoe
+# @Site     :
+# @File     :001_文件夹批量重命名.py
+# @Software :PyCharm
+
+'''
+根据csv内的对比名称进行重命名文件夹
+'''
+
+import os
+import glob
+import csv
+
+
+def csv_file_list(csv_file):
+    with open(csv_file, encoding='UTF-8-sig') as fp:
+        name_list = []
+        f_csv = csv.reader(fp)
+        for i in f_csv:
+            name_list.append(i)
+    return name_list
+
+
+def rename_path(dir_path, csv_file):
+    dir_list = glob.glob(dir_path + '/*')
+    for path in dir_list:
+        if os.path.isdir(path):
+            dir_first, dir_name = os.path.split(path)
+            for name in csv_file_list(csv_file):
+                if name[0] in dir_name:
+                    dir_name = dir_name.replace(name[0], name[1])
+                    new_path = os.path.join(dir_first, dir_name)
+                    os.rename(path, new_path)
+
+
+if __name__ == '__main__':
+    csv_file = r"E:\work\012_工作日记\备份日记\202012\20201222\MBRI-2003_BS1&BX1_Design status.csv"
+    dir_path = r"M:\BIW_Engineering\48_Rivian\MBRI-2003\020_Robot_Simulation\010_To_Simulation\03_VBS\01_BS"
+    rename_path(dir_path, csv_file)
