@@ -1,0 +1,29 @@
+import csv
+
+def sepereate_csv(file):
+    content=[]
+    column=[]
+    with open(file,encoding='gbk')as f:
+        read = csv.reader(f)
+        headers = next(read)
+        for row in read:
+            try:
+                content.append(row)
+                column.append(row[1])
+            except StopIteration:
+                pass
+        
+    for name in set(column[1:-1]):
+        with open(name+'.csv','w',newline = '')as f:
+            rows=[row for row in content if row[1] == name]
+            write=csv.writer(f)
+            write.writerow(headers)
+            write.writerows(rows)
+            print("写入完毕！")
+
+if __name__ == '__main__':
+    try:
+        file =  sys.argv[1]
+    except Exception as e:
+        file =  "2003.csv"
+    sepereate_csv(file)
