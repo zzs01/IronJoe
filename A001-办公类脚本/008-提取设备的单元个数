@@ -1,0 +1,40 @@
+import csv
+import sys
+import re
+from functools import reduce
+
+def separate_csv(file):
+    name = []
+    modes = []
+    wuliao = []
+    with open(file, encoding='gbk')as f:
+        read = csv.reader(f)
+        headers = next(read)
+        for row in read:
+            try:
+                if "C03" in row[5]: name.append(row[1]); modes.append([row[1],row[9]])
+            except StopIteration:
+                pass
+   # print(modes)
+    for m in set(name):
+        units = []
+        for mode in modes[::-1]:
+            if m in mode[1]:
+                units.append(re.findall(m+"_(.*?)"+"_",mode[1],re.DOTALL))
+                modes.remove(mode)
+        unit = []
+        for un in units: #去重，用set会出错
+            if un not in unit:
+                unit.append(un)
+        print('%s 有 %-3s 个 单元' % (m,len(unit)))
+        print('每个单元的个数如下：')
+        for u in unit:
+            print('%s 有 %-3s 个' % (u,units.count(u)))
+
+
+if __name__ == '__main__':
+    try:
+        file = sys.argv[1]
+    except Exception as e:
+        file = "MBRI-2003 - 复制.csv"
+    separate_csv(file)
