@@ -1,0 +1,62 @@
+import shutil
+import os
+#复制文件 
+'''
+使用：python3 run.py src_dir dst_dir "keyword"
+'''
+# 直接复制整个目录
+def copy_dirtree(src_dir, dst_dir):
+    if os.path.exists(dst_dir):
+        print("存在与目标目录同名文件或目录")
+        exit()
+    else:
+        shutil.copytree(src_dir, dst_dir)
+
+# 删除含关键字的文件（不能直接复制然后删除）        
+def rm_file_by_key(path, key):
+    for file in os.listdir(path):
+        file_name = path + "/" + file
+        if os.path.isdir(file_name):
+            rm_file_by_key(file_name,key)
+        elif key in file_name:
+            print("remove " + file_name)
+            os.remove(file_name)
+
+# 创建目录            
+def mk_dst_dir(path):
+    if os.path.exists(path):
+        if os.listdir(path):
+            print("存在与目标目录同名文件或目录,，且不为空")
+            exit()
+    else:
+        os.makedirs(dst_dir)
+# 复制目录并剔除不含关键字的文件
+def copy_dirtree_invert_by_key(src_dir, dst_dir, keyword):
+    for file in os.listdir(src_dir):
+        file_name = src_dir + "/" + file
+        target_name = dst_dir + "/" + file
+        if os.path.isdir(file_name):
+            os.mkdir(target_name)
+            copy_dirtree_invert_by_key(file_name,target_name,keyword)
+        elif keyword not in file_name:
+            print("copy " + file_name)
+            shutil.copyfile(file_name,target_name)
+            
+if __name__ == "__main__":
+    import sys
+    try: 
+        src_dir=sys.argv[1]
+        dst_dir=sys.argv[2]
+    except Exception as e:
+        print("原目录，目标目录必须填写")
+        exit()
+    try: 
+        keyword=sys.argv[3]
+    except Exception as e:
+        print("整体复制")
+        keyword=""
+    mk_dst_dir(dst_dir)
+    if keyword:
+        copy_dirtree_invert_by_key(src_dir, dst_dir, keyword)
+    else:
+        copy_dirtree(src_dir, dst_dir)
