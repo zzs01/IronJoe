@@ -12,6 +12,12 @@ Set fs = CATIA.FileSystem         'CATIA文档系统
 Set f = fs.GetFolder(folderinput) '获取输入路径位置
 Set fc = f.Files                  '文件集合
 
+'后缀名指定
+
+Suffix = "stp"
+
+SuffixAdd = "." & Suffix
+
 '遍历集合内的文件
 For Each f1 in fc
 
@@ -26,11 +32,11 @@ For Each f1 in fc
     docname = Split(f1.name,".")(0)
 
     pathname = folderoutput & "\" & docname
+    
+    IESIRE = pathname & SuffixAdd
+    
+    PartDocument1.ExportData IESIRE , Suffix
 
-    IESIRE = pathname & ".stp"
-
-    'msgbox IESIRE 
-    PartDocument1.ExportData IESIRE , "stp"
 
     CATIA.ActiveDocument.Close
     
