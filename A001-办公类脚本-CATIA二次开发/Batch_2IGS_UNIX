@@ -1,0 +1,45 @@
+Language="VBSCRIPT"
+
+Sub CATMain()
+
+folderinput = InputBox ("Take your files from here","Input","输入路径",2000,4000)
+folderoutput = InputBox ("Put your files here","Output","输出路径",2000,4000)
+
+Dim fs, f, f1, fc, s As FileSystem
+
+
+Set fs = CATIA.FileSystem         'CATIA文档系统
+Set f = fs.GetFolder(folderinput) '获取输入路径位置
+Set fc = f.Files                  '文件集合
+
+'后缀名指定
+
+Suffix = "igs"
+
+SuffixAdd = "." & Suffix
+
+'遍历集合内的文件
+For Each f1 in fc
+
+    Set documents1 = CATIA.Documents
+    
+    Dim INTRARE As String
+    INTRARE = CATIA.FileSystem.ConcatenatePaths(folderinput , f1.name)
+    
+    Set partDocument1 =documents1.Open(INTRARE)
+    
+    '字符串分割后为数组
+    docname = Split(f1.name,".")(0)
+
+    pathname = folderoutput & "\" & docname
+    
+    IESIRE = pathname & SuffixAdd
+    
+    PartDocument1.ExportData IESIRE , Suffix
+
+
+    CATIA.ActiveDocument.Close
+    
+    Next
+
+End Sub
