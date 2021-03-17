@@ -1,0 +1,56 @@
+Language="VBSCRIPT"
+
+Sub CATMain()
+
+folderinput = InputBox ("Take your files from here","Input","输入路径",2000,4000)
+folderoutput = InputBox ("Put your files here","Output","输出路径",2000,4000)
+
+Dim fs, f, f1, fc, s As FileSystem
+
+
+Set fs = CATIA.FileSystem         'CATIA文档系统
+Set f = fs.GetFolder(folderinput) '获取输入路径位置
+Set fc = f.Files                  '文件集合
+
+'遍历集合内的文件
+
+'后缀名指定
+
+Suffix = "pdf"
+
+SuffixAdd = "." & Suffix
+
+For Each f1 in fc
+    
+    '输入文件名称
+    Dim INTRARE As String
+    INTRARE = CATIA.FileSystem.ConcatenatePaths(folderinput , f1.name)
+    
+    '输出文件完整路径名
+    '字符串分割后为数组
+    docname = Split(f1.name,".")(0)
+    pathname = folderoutput & "\" & docname
+    
+    '创建图形文件集合
+    Set drawingDocuments = CATIA.Documents
+   
+    '打开图形文件
+    Dim drawingDocument1 As Document
+    Set drawingDocument1 =drawingDocuments.Open(INTRARE)
+    
+    Dim drawingSheets1 As DrawingSheets
+    Set drawingSheets1 = drawingDocument1.Sheets
+    
+    Dim drawingSheet1 As DrawingSheet
+    Set drawingSheet1 = drawingSheets1.ActiveSheet
+    
+    IESIRE = pathname & SuffixAdd
+    
+    drawingDocument1.ExportData IESIRE , Suffix
+    
+    CATIA.ActiveDocument.Close
+    
+    Next
+
+End Sub
+
