@@ -1,0 +1,56 @@
+Public Sub EasyReplace()
+    Dim s As String
+    Dim RE As Object
+    '获取Regular Expression 组件
+    Set RE = ThisDrawing.Application.GetInterfaceObject("Vbscript.RegExp")
+    
+    '查找匹配字符串时忽略大小写
+    'RE.IgnoreCase = True
+    'RE.IgnoreCase = False
+    
+    '搜索整个字符串
+    'RE.Global = True
+    
+    Dim strFind As String
+    Dim strReplace As String
+    
+    strFind = "3200"
+    strReplace = "3100"
+    
+    Dim ent As AcadEntity
+    For Each ent In ThisDrawing.ModelSpace
+        If TypeOf ent Is AcadText Or TypeOf ent Is AcadMText Then
+            
+            With ent
+                If InStr(.TextString, strFind) Then _
+                .TextString = Replace(.TextString, strFind, strReplace)
+                Debug.Print .TextString
+            End With
+        End If
+        If TypeOf ent Is AcadTable Then
+            Dim tableGetTxt As String
+            Dim tableSetTxt As String
+            Dim tableColumn As Integer '列
+            Dim tableRow    As Integer '行
+            On Error Resume Next '发生错误时继续下一个Next
+            For tableRow = 0 To ent.Rows - 1
+                For tableColumn = 0 To ent.Rows - 1
+                    tableGetTxt = ent.GetText(tableRow, tableColumn)
+                    tableGetTxt = Replace(tableGetTxt, strFind, strReplace)
+                    'Debug.Print tableGetTxt '立即窗口打印显示
+                    With ent
+                        .SetText tableRow, tableColumn, tableGetTxt
+                    End With
+                Next tableColumn
+            Next tableRow
+        End If
+    Next ent
+    
+    '替换\\字符
+    'RE.Pattern = "am|is"
+    
+    's = RE.Replace(s,"are")
+    
+    'MsgBox s
+    
+End Sub
