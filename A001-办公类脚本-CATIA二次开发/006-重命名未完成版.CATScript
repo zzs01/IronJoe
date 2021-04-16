@@ -1,0 +1,81 @@
+Language="VBSCRIPT"
+
+Sub CATMain()
+	
+	Dim fs As FileSystem
+	Set fs = CATIA.FileSystem                         '文件系统，用于文件夹操作
+	
+	'最大层级的产品文档
+	Dim oTopProductDoc As Document
+	Set oTopProductDoc = CATIA.ActiveDocument
+	
+	'最大层级的产品
+	Dim oTopProduct As Product
+	Set oTopProduct = oTopProductDoc.Product
+	
+	Dim strFind As String
+	Dim strReplace As String
+	
+	strFind = "ppppp"
+	strReplace = "Part"
+		
+	'文档集合
+	Dim oTopProDocs As Documents
+	Set oTopProDocs = CATIA.Documents
+	
+	'遍历产品下的文件
+	Dim products1 As Products
+	Set products1 = oTopProduct.Products
+	
+	Dim lNumberOfItems As Integer
+	lNumberOfItems = oTopProduct.Products.Count
+
+	For i = 1 to lNumberOfItems
+	
+		Dim product2 As Product
+		Set product2 = products1.Item(i)
+		
+		'替换零件编号
+		
+		'product2.PartNumber = Replace(product2.PartNumber,strFind,strReplace)
+		'修改实例名称
+		'product2.Name = Replace(product2.Name,strFind,strReplace)
+		
+		'利用参考文件
+		Dim proName As String
+		proName = product2.ReferenceProduct.Parent.Name 
+		'proName = product2.Name
+		
+		MsgBox proName
+		
+		'Dim oSecDoc As Document
+		'Set oSecDoc = oTopProDocs.Item(proName)
+			
+		'Dim docPath As String
+		'Dim docFullPath As String
+		
+		'docPath = oSecDoc.Path                   '文件所在的路径位置
+		'docFullPath = oSecDoc.FullName  
+		
+		'Dim newPathName AS String
+		'Dim suffixName As String
+		
+		'Dim ItemToRename As String
+		'ItemToRename = product2.PartNumber
+		
+		'suffixName = Split(oSecDoc.Name, ".")(1) '文件拓展名
+		'newPathName = docPath & "\" & ItemToRename & "." & suffixName
+		
+		'oSecDoc.SaveAs newPathName  
+		'fs.DeleteFile docFullPath 
+	Next
+	'productDocument1.SaveAs newPathName               '文件另存为
+	'fs.DeleteFile docFullPath                         '删除文件夹下的文件
+
+
+End Sub
+
+'单个零件的重命名
+
+'Public Function ReName(ByVal beReplaceTxt As String)
+	'Dim 
