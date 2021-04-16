@@ -1,0 +1,40 @@
+Language="VBSCRIPT"
+Sub CATMain()
+
+folderinput = InputBox ("Take your files from here","Input","E:\work\012_工作日记\备份日记\202103\20210312\生产文件 - 复制 (2)",2000,4000)
+folderoutput = InputBox ("Put your files here","Output","E:\work\012_工作日记\备份日记\202103\20210312\新建文件夹",2000,4000)
+
+Dim fs, f, f1, fc, s As FileSystem
+
+Set fs = CATIA.FileSystem
+Set f = fs.GetFolder(folderinput)
+Set fc = f.Files
+
+For Each f1 in fc
+	Dim PartDocument1 As Document
+	Set documents1 = CATIA.Documents
+
+	Dim document1 As Document
+
+	INTRARE = fs.ConcatenatePaths(folderinput , f1.name)
+
+	'Msgbox INTRARE 
+
+	Set PartDocument1 = CATIA.Documents.Open(INTRARE)
+
+	'利用分割，得出数组（python的列表）
+	
+	
+	Dim oRootProduct As Product
+    Set oRootProduct = PartDocument1.Product
+
+	docname = oRootProduct.PartNumber
+	
+	IESIRE = folderoutput & "\" & docname & ".igs"
+	PartDocument1.ExportData IESIRE, "igs"
+
+	CATIA.ActiveDocument.Close
+
+	Next
+
+End Sub
