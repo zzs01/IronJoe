@@ -1,0 +1,72 @@
+Public Sub EasyReplace()
+ 
+    Dim strFind As String
+    Dim strReplace As String
+
+    Dim ent As AcadEntity
+    For Each ent In ThisDrawing.ModelSpace
+        If TypeOf ent Is AcadText Or TypeOf ent Is AcadMText Then
+            
+            With ent
+                If InStr(.TextString, strFind) Then _
+                .TextString = ReReplace(.TextString)
+                'Debug.Print .TextString
+            End With
+        End If
+        If TypeOf ent Is AcadTable Then
+            Dim tableGetTxt As String
+            Dim tableSetTxt As String
+            Dim tableColumn As Integer '列
+            Dim tableRow    As Integer '行
+            On Error Resume Next '发生错误时继续下一个Next
+            For tableRow = 0 To ent.Rows - 1
+                For tableColumn = 0 To ent.Rows - 1
+                    tableGetTxt = ent.GetText(tableRow, tableColumn)
+                    tableGetTxt = ReReplace(tableGetTxt)
+                    'Debug.Print tableGetTxt '立即窗口打印显示
+                    With ent
+                        .SetText tableRow, tableColumn, tableGetTxt
+                    End With
+                    DoEvents
+                Next tableColumn
+                DoEvents
+            Next tableRow
+        End If
+        DoEvents
+    Next ent
+    
+End Sub
+
+
+Public Function ReReplace(ByVal beReplaceTxt As String) As String
+                            
+    Dim RE As Object
+    Dim match As Object
+    Dim matchs As Object
+    
+    '获取Regular Expression 组件
+    Set RE = ThisDrawing.Application.GetInterfaceObject("Vbscript.RegExp")
+    
+    '查找匹配字符串时忽略大小写
+    'RE.IgnoreCase = True
+    RE.IgnoreCase = False
+    
+    '搜索整个字符串
+    RE.Global = True
+    
+    RE.Pattern = "(BL2.{15,22}\d{3})(L)"
+    
+    'Debug.Print beReplaceTxt
+    Set matchs = RE.Execute(beReplaceTxt)
+    
+    For Each match In matchs
+        Dim mhStr1 As String
+        Dim mhStr2 As String
+        mhStr1 = match.submatches(0)
+        mhStr2 = match.submatches(1)
+        'Debug.Print mhStr1
+        beReplaceTxt = Replace(beReplaceTxt, mhStr1 + mhStr2, mhStr1)
+        'Debug.Print beReplaceTxt
+    Next
+    ReReplace = beReplaceTxt
+End Function
