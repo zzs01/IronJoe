@@ -23,7 +23,7 @@
      mkl_vml_p4m2.dll
      mkl_vml_p4m3.dll
 
-### matplotlib 画图显示中文字符问题
+### * matplotlib 画图显示中文字符问题
 #### 1.在新py文件添加以下两行代码，运行，打印出一个文件路径
     import matplotlib
     print(matplotlib.matplotlib_fname())
