@@ -23,9 +23,11 @@
      mkl_vml_p4m2.dll
      mkl_vml_p4m3.dll
 
-### * matplotlib 画图显示中文字符问题
+### 2.matplotlib 画图显示中文字符问题
 #### 1.在新py文件添加以下两行代码，运行，打印出一个文件路径
     import matplotlib
     print(matplotlib.matplotlib_fname())
 #### 2.打开文件，在行 #font.sans-serif: DejaVu Sans 添加SimHei
     效果：#font.sans-serif: SimHei, DejaVu Sans
+
+### 3.sqlite数据问题，数字字符串写入时，需要添加双引号进行标记，否则数据写入时已经处理成首位不能是0的数字
