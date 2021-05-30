@@ -1,7 +1,7 @@
 ### 批量转数据
 
-- [ ] CATIA批量转igs以及stp整合成一个脚本，添加选择stp或igs
-- [ ] CATIA批量转dwg以及pdf整合成一个脚本，添加选择stp或igs
+- [x] CATIA批量转igs以及stp整合成一个脚本，添加选择stp或igs
+- [x] CATIA批量转dwg以及pdf整合成一个脚本，添加选择stp或igs
 - [ ] 添加判断文件类型或添加异常处理
 - [ ] 转igs或stp，添加文件居中处理
 
