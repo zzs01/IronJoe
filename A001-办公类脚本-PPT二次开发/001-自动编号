@@ -1,0 +1,56 @@
+Option Explicit
+Public x As Integer
+
+
+Sub 批量替换文字()
+
+Dim x As Integer
+Dim sld As Slide '幻灯片
+Dim shp As Shape '对象
+
+For Each sld In ActivePresentation.Slides
+    For Each shp In sld.Shapes
+    Call LDAdd(shp) '使用递归
+    Next
+Next
+End '防止全局变量x进行累积
+End Sub
+
+Function LDAdd(ByVal shp As Shape)
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim i As Integer
+Dim shpName As String
+Dim targetStr As String
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = "^LD\d+"
+
+'通过名称判断是否是一个组合
+shpName = shp.Name
+
+'如果是组合则重复调用function
+If InStr(shpName, "Group") = 1 Then
+    For i = 1 To shp.GroupItems.Count
+        Call LDAdd(shp.GroupItems(i))
+    Next
+ElseIf shp.HasTextFrame Then '判断是否含有文本框
+    If shp.TextFrame.HasText Then '判断文本框是否含有文本
+        targetStr = shp.TextFrame.TextRange '提取文本中的内容
+        If RE.test(targetStr) Then
+            x = x + 1
+            shp.TextFrame.TextRange = Replace(targetStr, targetStr, "LD" & x)
+            Debug.Print x
+        End If
+    End If
+End If
+
+End Function
