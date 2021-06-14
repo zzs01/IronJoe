@@ -1,0 +1,109 @@
+'窗体部分,名称：UserForm1
+Option Explicit
+Private Sub CancleButton_Click()
+End
+End Sub
+
+Private Sub CommandButton1_Click()
+
+Dim x1 As String
+Dim y1 As String
+Dim z1 As String
+
+
+x1 = UserForm1.XTextBox.Text
+y1 = UserForm1.YTextBox.Text
+z1 = UserForm1.ZTextBox.Text
+
+If IsNumeric(x1) And IsNumeric(y1) And IsNumeric(y1) Then
+    x1 = CDbl(x1)
+    y1 = CDbl(y1)
+    z1 = CDbl(z1)
+    Call mainProcess.XYZChange(x1, y1, z1)
+Else
+    MsgBox "请输入有效数字"
+End If
+
+MsgBox "程序运行结束"
+
+End Sub
+
+
+'模块部分，名称：mainProcess
+
+'''''''''''''''''
+'XYZ值批量替换
+'
+''''''''''''''''
+Option Explicit
+Public x As Integer
+
+Sub main()
+UserForm1.Show
+End Sub
+
+Function XYZChange(ByVal x1 As Double, ByVal y1 As Double, ByVal z1 As Double)
+
+Dim x As Integer
+Dim sld As Slide '幻灯片
+Dim shp As Shape '对象
+
+For Each sld In ActivePresentation.Slides
+    For Each shp In sld.Shapes
+    Call LDAdd(shp, x1, y1, z1) '使用递归
+    Next
+Next
+End Function
+
+Function LDAdd(ByVal shp As Shape, ByVal x1 As Double, ByVal y1 As Double, ByVal z1 As Double)
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim i As Integer
+Dim shpName As String
+Dim targetStr As String
+Dim mhStr1 As String
+Dim mhStr2 As String
+Dim mhStr3 As String
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = "^[x|X]=(-?\d+\.?\d+)\s[y|Y]=(-?\d+\.?\d+)\s[z|Z]=(-?\d+\.?\d+)"
+
+'通过名称判断是否是一个组合
+shpName = shp.Name
+
+'如果是组合则重复调用function
+If InStr(shpName, "Group") = 1 Then
+    For i = 1 To shp.GroupItems.Count
+        Call LDAdd(shp.GroupItems(i), x1, y1, z1)
+    Next
+ElseIf shp.HasTextFrame Then '判断是否含有文本框
+    If shp.TextFrame.HasText Then '判断文本框是否含有文本
+        targetStr = shp.TextFrame.TextRange '提取文本中的内容
+        If RE.test(targetStr) Then
+            Set matchs = RE.Execute(targetStr)
+            For Each match In matchs
+                mhStr1 = match.submatches(0)
+                mhStr2 = match.submatches(1)
+                mhStr3 = match.submatches(2)
+                shp.TextFrame.TextRange = Replace(targetStr, "X=" & mhStr1, "X=" & CDbl(mhStr1) - x1)
+                targetStr = shp.TextFrame.TextRange
+                shp.TextFrame.TextRange = Replace(targetStr, "Y=" & mhStr1, "Y=" & CDbl(mhStr2) - y1)
+                targetStr = shp.TextFrame.TextRange
+                shp.TextFrame.TextRange = Replace(targetStr, "Z=" & mhStr1, "Z=" & CDbl(mhStr3) - z1)
+            Next match
+
+'            Debug.Print targetStr
+'            shp.TextFrame.TextRange = Replace(targetStr, targetStr, "LD" & x)
+        End If
+    End If
+End If
+
+End Function
