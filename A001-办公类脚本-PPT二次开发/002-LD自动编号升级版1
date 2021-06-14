@@ -1,0 +1,163 @@
+'''''''''''''''''''''''
+'打破所有组合
+'调整LD的Top和Left位置
+'根据LD所在位置进行编号
+'
+'
+''''''''''''''''''''''
+Attribute VB_Name = "模块1"
+Option Explicit
+Dim UbNum As Integer
+
+Sub 批量替换文字()
+
+Dim x As Integer
+Dim sld As Slide '幻灯片
+Dim shp As Shape '对象
+
+'打散所有组合
+Call groupCancel
+UbNum = 0
+For Each sld In ActivePresentation.Slides
+
+        UbNum = arrCreate(sld)  '使用递归先取消一张幻灯片内的所有组合
+
+Next
+MsgBox "程序运行结束，请检查"
+End '防止全局变量x进行累积
+End Sub
+
+Function groupCancel()
+
+''''''''''''''''''''''
+'取消所有组合
+'循环10次，稳妥点
+'
+''''''''''''''''''''''
+Dim sld As Slide '幻灯片
+Dim shp As Shape '对象
+Dim shpName As String
+Dim x As Integer
+
+For Each sld In ActivePresentation.Slides
+    x = 1
+    Do
+        For Each shp In sld.Shapes
+            '通过名称判断是否是一个组合
+            shpName = shp.Name
+            If InStr(shpName, "Group") = 1 Then
+                shp.Ungroup '取消所有组合
+            End If
+        Next
+        x = x + 1
+    Loop Until x = 10
+Next
+
+End Function
+
+Function arrCreate(ByVal sld As Slide) As Integer
+''''''''''''''
+'根据位置进行调整编号
+'
+''''''''''''''
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim x As Integer
+Dim targetStr As String
+Dim shp As Shape
+Dim Dic As Object
+Dim arr(1 To 200, 1 To 3)
+Dim i As Integer
+Dim arr1
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = "^LD\d+"
+
+'多维数组重新定义不能保留前面的值
+x = 0
+
+For Each shp In sld.Shapes
+    If shp.HasTextFrame Then '判断是否含有文本框
+        If shp.TextFrame.HasText Then '判断文本框是否含有文本
+            targetStr = shp.TextFrame.TextRange '提取文本中的内容
+            If RE.test(targetStr) Then
+                x = x + 1
+                arr(x, 1) = shp.Id
+                arr(x, 2) = shp.Top \ 10 '放量，利用余量来调整
+                shp.Top = arr(x, 2) * 10
+                arr(x, 3) = shp.Left \ 10
+                shp.Left = arr(x, 3) * 10
+                
+            End If
+        End If
+    End If
+Next
+
+arr1 = arrSort(arr)
+For i = 1 To UBound(arr1)
+    If arr1(i, 2) = "" Then
+        arrCreate = i - 1
+        'Debug.Print UbNum
+        Exit For
+    End If
+    For Each shp In sld.Shapes
+        If shp.Id = arr1(i, 1) Then
+            targetStr = shp.TextFrame.TextRange
+            shp.TextFrame.TextRange = Replace(targetStr, targetStr, "LD" & i + UbNum)
+        End If
+    Next
+Next
+
+End Function
+
+Function arrSort(ByVal arr As Variant) As Variant
+
+Dim x As Integer
+Dim y As Integer
+Dim temp1
+Dim temp2
+Dim temp3
+Dim b1 As Integer
+Dim b2 As Integer
+
+
+b1 = LBound(arr, 1) '一维最小下标
+
+b2 = LBound(arr, 2)  '二维最小下标
+
+
+For x = b1 + 1 To UBound(arr)
+    temp1 = arr(x, b2)
+    temp2 = arr(x, b2 + 1)
+    temp3 = arr(x, b2 + 2)
+    If temp1 = "" Then Exit For
+    For y = x - 1 To 1 Step -1
+        If arr(y, b2 + 2) < temp3 Then Exit For
+                arr(y + 1, b2) = arr(y, b2)
+                arr(y + 1, b2 + 1) = arr(y, b2 + 1)
+                arr(y + 1, b2 + 2) = arr(y, b2 + 2)
+        If arr(y, b2 + 2) = temp3 Then
+            If arr(y, b2 + 1) > temp2 Then Exit For
+                arr(y + 1, b2) = arr(y, b2)
+                arr(y + 1, b2 + 1) = arr(y, b2 + 1)
+                arr(y + 1, b2 + 2) = arr(y, b2 + 2)
+        End If
+    Next y
+    
+    arr(y + 1, b2) = temp1
+    arr(y + 1, b2 + 1) = temp2
+    arr(y + 1, b2 + 2) = temp3
+Next
+
+arrSort = arr
+
+End Function
