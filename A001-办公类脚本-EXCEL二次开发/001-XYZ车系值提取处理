@@ -1,0 +1,111 @@
+Option Explicit
+
+Sub main()
+Dim str As String
+Dim path As String
+Dim x As Integer
+Dim XstrPattern As String
+Dim YstrPattern As String
+Dim ZstrPattern As String
+Dim Xarr, Yarr, Zarr
+Dim wb As Workbook
+
+
+path = "H:\001-开发\003-Excel开发\处理文本.txt"
+str = txtRead(path)
+
+'X方向的值
+XstrPattern = "Pt2x = (-?\d+.?\d+)"
+Xarr = strProcess(str, XstrPattern)
+
+'Y方向的值
+YstrPattern = "Pt2y = (-?\d+.?\d+)"
+Yarr = strProcess(str, YstrPattern)
+
+'Z方向的值
+ZstrPattern = "Pt2z = (-?\d+.?\d+)"
+Zarr = strProcess(str, ZstrPattern)
+
+
+Set wb = Workbooks.Open("H:\001-开发\003-Excel开发\车系导出.xlsx")
+With wb.Sheets(1)
+    .Range("a1") = "X"
+    .Range("a2").Resize(UBound(Xarr)) = Application.Transpose(Xarr)
+    .Range("b1") = "Y"
+    .Range("b2").Resize(UBound(Yarr)) = Application.Transpose(Yarr)
+    .Range("c1") = "Z"
+    .Range("c2").Resize(UBound(Zarr)) = Application.Transpose(Zarr)
+    .UsedRange.NumberFormat = "#.00"
+End With
+
+Call txtWrite(arr1:=Xarr, arr2:=Yarr, arr3:=Zarr)
+
+End Sub
+
+Function txtWrite(ByVal arr1 As Variant, ByVal arr2 As Variant, ByVal arr3 As Variant)
+
+Dim f As String
+Dim x As Integer
+f = "H:\001-开发\003-Excel开发\处理后结果.txt"
+
+Open f For Output As #1
+    For x = LBound(arr1) To UBound(arr1)
+        Print #1, "LD" & x
+        Print #1, "X=" & arr1(x)
+        Print #1, "Y=" & arr2(x)
+        Print #1, "Z=" & arr3(x)
+        Print #1, Chr(10)
+    Next
+    Close #1
+    
+End Function
+
+Function strProcess(ByVal targetStr As String, ByVal strPattern As String) As Variant
+
+'方向的值处理
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim mhStr1 As String
+Dim arr()
+Dim x As Integer
+
+'X方向的值处理
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+'搜索整个字符串
+RE.Global = True
+'正则匹配
+RE.Pattern = strPattern
+
+Set matchs = RE.Execute(targetStr)
+x = 0
+For Each match In matchs
+    
+    x = x + 1
+    ReDim Preserve arr(1 To x)
+    mhStr1 = match.submatches(0)
+    mhStr1 = mhStr1 * 100 \ 10
+    mhStr1 = Format(mhStr1 / 10, "#.00")
+    arr(x) = mhStr1
+    
+Next
+strProcess = arr
+End Function
+
+Function txtRead(ByVal fPath As String) As String
+
+'把文本文件的内容一次性取出来
+Dim mychar, n, L
+
+n = FreeFile
+Open fPath For Input As n
+    L = LOF(n)
+    mychar = Input(L - 6, n) '要减去中文字符的个数
+    'Debug.Print mychar   ' 显示到立即窗口。
+Close #1
+
+txtRead = mychar
+
+End Function
+
