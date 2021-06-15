@@ -98,11 +98,11 @@ ElseIf shp.HasTextFrame Then '判断是否含有文本框
                 mhStr1 = match.submatches(0)
                 mhStr2 = match.submatches(1)
                 mhStr3 = match.submatches(2)
-                shp.TextFrame.TextRange = Replace(targetStr, "X=" & mhStr1, "X=" & CDbl(mhStr1) - x1)
+                shp.TextFrame.TextRange = Replace(targetStr, "X=" & mhStr1, "X=" & Format((CDbl(mhStr1) - x1), "#.00"))
                 targetStr = shp.TextFrame.TextRange
-                shp.TextFrame.TextRange = Replace(targetStr, "Y=" & mhStr1, "Y=" & CDbl(mhStr2) - y1)
+                shp.TextFrame.TextRange = Replace(targetStr, "Y=" & mhStr1, "Y=" & Format((CDbl(mhStr2) - y1), "#.00"))
                 targetStr = shp.TextFrame.TextRange
-                shp.TextFrame.TextRange = Replace(targetStr, "Z=" & mhStr1, "Z=" & CDbl(mhStr3) - z1)
+                shp.TextFrame.TextRange = Replace(targetStr, "Z=" & mhStr1, "Z=" & Format((CDbl(mhStr3) - z1), "#.00"))
             Next match
 
 '            Debug.Print targetStr
