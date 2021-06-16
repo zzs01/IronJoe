@@ -1,0 +1,117 @@
+Option Explicit
+
+Sub main()
+UserForm1.Show
+End Sub
+
+Function mainProcess(ByVal outputPath As String)
+
+Dim outputPathTxt As String
+
+Dim str As String
+Dim inputPath As String
+Dim ouputPath As String
+
+Dim XstrPattern As String
+Dim YstrPattern As String
+Dim ZstrPattern As String
+Dim Xarr, Yarr, Zarr
+
+str = MeasureOut
+
+'X方向的值
+XstrPattern = "Pt2x = (-?\d+.?\d+)"
+Xarr = strProcess(str, XstrPattern)
+
+'Y方向的值
+YstrPattern = "Pt2y = (-?\d+.?\d+)"
+Yarr = strProcess(str, YstrPattern)
+
+'Z方向的值
+ZstrPattern = "Pt2z = (-?\d+.?\d+)"
+Zarr = strProcess(str, ZstrPattern)
+
+outputPathTxt = outputPath & "\" & "001-处理后结果.txt"
+
+Call txtWrite(arr1:=Xarr, arr2:=Yarr, arr3:=Zarr, fPath:=outputPathTxt)
+
+End Function
+
+Function MeasureOut() As String
+
+Dim productDocument1 As ProductDocument
+Set productDocument1 = CATIA.ActiveDocument
+
+Dim product1 As Product
+Set product1 = productDocument1.Product
+
+Dim oParams As Parameters
+Set oParams = product1.Parameters
+
+Dim PatternFind As String
+PatternFind = "测量"
+
+Dim msg As String
+'msg = ""
+''MsgBox all values of the parameter that contains 'Measure'
+Dim Item
+For Each Item In oParams
+    If InStr(Item.Name, PatternFind) <> 0 Then
+        msg = msg + Item.Name & " = " & Item.Value
+    End If
+Next
+
+MeasureOut = msg
+
+End Function
+
+Function txtWrite(ByVal arr1 As Variant, ByVal arr2 As Variant, ByVal arr3 As Variant, ByVal fPath As String)
+'txt文件写入
+
+Dim f As String
+Dim x As Integer
+
+Open fPath For Output As #1
+    For x = LBound(arr1) To UBound(arr1)
+        Print #1, "LD" & x
+        Print #1, "X=" & arr1(x)
+        Print #1, "Y=" & arr2(x)
+        Print #1, "Z=" & arr3(x)
+        Print #1, VBA.Chr(10)
+    Next
+    Close #1
+    
+End Function
+
+Function strProcess(ByVal targetStr As String, ByVal strPattern As String) As Variant
+
+'方向的值处理
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim mhStr1 As String
+Dim arr()
+Dim x As Integer
+
+'X方向的值处理
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+'搜索整个字符串
+RE.Global = True
+'正则匹配
+RE.Pattern = strPattern
+
+Set matchs = RE.Execute(targetStr)
+x = 0
+For Each match In matchs
+    
+    x = x + 1
+    ReDim Preserve arr(1 To x)
+    mhStr1 = match.submatches(0)
+    mhStr1 = mhStr1 * 100 \ 10
+    mhStr1 = VBA.Format(mhStr1 / 10, "#.00")
+    arr(x) = mhStr1
+    
+Next
+strProcess = arr
+End Function
