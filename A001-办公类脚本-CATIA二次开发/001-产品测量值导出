@@ -1,6 +1,6 @@
 Option Explicit
 
-Sub main()
+Sub CATmain()
 UserForm1.Show
 End Sub
 
