@@ -105,7 +105,7 @@ Next
 arr1 = arrSort(arr)
 For i = 1 To UBound(arr1)
     If arr1(i, 2) = "" Then
-        arrCreate = i - 1
+        arrCreate = i - 1 + UbNum
         'Debug.Print UbNum
         Exit For
     End If
