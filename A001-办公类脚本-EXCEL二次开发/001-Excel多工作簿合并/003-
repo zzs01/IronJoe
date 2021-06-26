@@ -1,0 +1,102 @@
+Option Explicit
+
+
+Sub Excel合并()
+MyForm.Show
+End Sub
+Function excelFileList(ByVal startPath As String) As Variant
+'''''''''''''''''''
+'取出所有xls或xlsx文件,忽略大小写
+'返回包含文件绝对路径的数组
+'
+'
+'''''''''''''''''''
+Dim Filename As String
+Dim k As Integer
+Dim arr() As Variant
+
+Filename = Dir(startPath & "\", vbNormal)
+Do
+    If Filename Like "*.[Xx][Ll][Ss]*" Then
+        k = k + 1
+        ReDim Preserve arr(1 To k)
+        arr(k) = Filename
+        'Debug.Print Filename
+    End If
+    Filename = Dir
+Loop Until Filename = ""
+
+excelFileList = arr
+
+End Function
+
+Function ExcelOpen(ByVal startPath As String)
+
+Dim wb As Workbook
+Dim wb0 As Workbook
+Dim arr As Variant
+Dim x As Integer
+Dim b1 As Integer
+Dim b2 As Integer
+Dim i As Integer
+Dim r1 As Long
+Dim rg As Range
+Dim y  As Long
+Dim path As String
+Dim c As Integer
+Dim ad As String
+
+'屏幕不刷新
+Application.ScreenUpdating = False
+
+arr = excelFileList(startPath)
+
+Set wb = Workbooks.Add
+
+Dim sh As Worksheet
+Set sh = wb.Sheets(1)
+sh.Name = "合并"
+
+'自动覆盖文件
+Application.DisplayAlerts = False
+wb.SaveAs startPath & "\001-合并后\001-合并后.xlsx", ConflictResolution:=2
+Application.DisplayAlerts = True
+
+b1 = LBound(arr)
+b2 = UBound(arr)
+On Error Resume Next
+For x = b1 To b2
+    DoEvents
+    DoEvents
+    Set wb0 = Workbooks.Open(startPath & "\" & arr(x))
+    If x = b1 Then
+        For i = 1 To wb0.Sheets.Count
+            r1 = wb0.Sheets(i).Rows.Count
+            If r1 > 1 Then
+                wb0.Sheets(i).UsedRange.Copy wb.Sheets("合并").Range("a1")
+            End If
+        Next
+    Else
+        For i = 1 To wb0.Sheets.Count
+            r1 = wb0.Sheets(i).Range("a1").CurrentRegion.Rows.Count
+            If r1 > 1 Then
+                c = wb0.Sheets(i).Range("a1").CurrentRegion.Columns.Count
+                ad = Cells(r1, c).Address
+                ad = VBA.Split(ad, "$")(1)
+                Set rg = Range(ad & r1)
+                y = wb.Sheets(1).Range("a1").CurrentRegion.Rows.Count
+                wb0.Sheets(i).Range("a2", rg).Copy wb.Sheets(1).Range("a" & (y + 1))
+            End If
+        Next
+    End If
+    wb0.Close
+Next
+path = startPath & "\001-合并后"
+If Dir(path, vbDirectory) = "" Then
+    MkDir path
+End If
+
+wb.Save
+wb.Close
+
+End Function
