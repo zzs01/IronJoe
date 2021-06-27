@@ -60,6 +60,11 @@ Set sh = wb.Sheets(1)
 shName = "合并"
 sh.Name = shName
 
+path = startPath & "\001-合并后"
+If Dir(path, vbDirectory) = "" Then
+    MkDir path
+End If
+
 '文件另存为，自动覆盖文件
 Application.DisplayAlerts = False
 wb.SaveAs startPath & "\001-合并后\001-合并后.xlsx", ConflictResolution:=2
@@ -98,10 +103,6 @@ For x = b1 To b2
     '交接控制权
     DoEvents
 Next
-path = startPath & "\001-合并后"
-If Dir(path, vbDirectory) = "" Then
-    MkDir path
-End If
 
 wb.Save
 wb.Close
