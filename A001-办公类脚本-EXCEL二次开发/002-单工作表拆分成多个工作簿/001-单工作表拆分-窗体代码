@@ -1,0 +1,44 @@
+Option Explicit
+
+Private Sub CancelButton_Click()
+End
+End Sub
+
+Private Sub ConfirmButton_Click()
+
+Dim originalText As String
+
+originalText = RefEdit1.Value
+
+
+Dim rng As Range '拆分工作表的主要依据
+Dim SheetName As String
+Dim wbName As String
+Dim wb As Workbook
+Dim co1 As Integer
+
+Set rng = Range(originalText)
+With rng
+    SheetName = .Parent.Name
+    wbName = .Parent.Parent.Name
+    Set wb = Workbooks(wbName)
+    co1 = .Column
+End With
+
+
+'Debug.Print SheetName
+'Debug.Print wbName
+'Debug.Print rangeText
+'Debug.Print co1
+ 
+Call mainprocess.process(wb, rng, SheetName, co1)
+
+End
+
+MsgBox "程序运行结束！"
+
+End Sub
+
+Private Sub RefEdit1_BeforeDragOver(Cancel As Boolean, ByVal Data As MSForms.DataObject, ByVal x As stdole.OLE_XPOS_CONTAINER, ByVal y As stdole.OLE_YPOS_CONTAINER, ByVal DragState As MSForms.fmDragState, Effect As MSForms.fmDropEffect, ByVal Shift As Integer)
+
+End Sub
