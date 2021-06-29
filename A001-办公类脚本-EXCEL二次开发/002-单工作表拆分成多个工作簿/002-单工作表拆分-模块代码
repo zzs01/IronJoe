@@ -1,17 +1,15 @@
 Option Explicit
 
-Private Sub 拆分()
+Sub 拆分()
 
-Dim t1 As Long
-Dim t2 As Long
-t1 = Timer
+MyForm.Show
+
+End Sub
+
+Function process(ByVal wb As Workbook, ByVal rng As Range, ByVal SheetName As String, ByVal co1 As Integer)
 
 '屏幕不刷新
 Application.ScreenUpdating = False
-
-Dim rng As Range '定义拆分表格主要依据
-
-Set rng = Range("J:J")
 
 'If rng Is Nothing Then End
 Dim arrHead As Variant '定义数组，用于存储表格拆分数据
@@ -24,6 +22,7 @@ Set dic = CreateObject("scripting.dictionary")
 Dim equip
 
 '字典去重，唯一性，有则覆盖，无则创建
+
 For Each equip In arrHead
     If equip <> "" Then
         dic(equip) = ""
@@ -33,11 +32,8 @@ Next
 '删除表头
 dic.Remove arrHead(1, 1)
 
-Dim wb As Workbook
-Set wb = ThisWorkbook
-
 Dim rg As Range
-Set rg = ThisWorkbook.Sheets(1).UsedRange
+Set rg = wb.Sheets(SheetName).UsedRange
 
 Dim arr As Variant '存储单元格数据
 arr = rg
@@ -52,7 +48,7 @@ c1 = LBound(arr, 2)
 c2 = UBound(arr, 2)
 
 Dim path As String
-path = ThisWorkbook.path & "\拆分后"
+path = wb.path & "\001-拆分后"
 If Dir(path, vbDirectory) = "" Then
     MkDir path
 End If
@@ -66,17 +62,17 @@ For Each equipName In dic.keys
 On Error Resume Next
     y = 0
     For x1 = r1 To r2
-        If InStr(arr(x1, 10), equipName) = 1 Then
+        If InStr(arr(x1, co1), equipName) = 1 Then
             y = y + 1
             If y = 1 Then
-                Set sh = ThisWorkbook.Sheets.Add
-                sh.Move after:=Sheets("Sheet1")
+                Set sh = wb.Sheets.Add
+                sh.Move after:=Sheets(SheetName)
 
                 With sh
                     sh.Name = "拆分"
                 End With
                 
-                Sheets("Sheet1").Range("1:1").Copy sh.Range("a1")
+                Sheets(SheetName).Range("1:1").Copy sh.Range("a1")
                 '使用循环，速度提高10倍左右
                 For y1 = c1 To c2
                     sh.Cells(y + 1, y1).Value = arr(x1, y1)
@@ -91,7 +87,7 @@ On Error Resume Next
     Next x1
     If y > 0 Then
         Dim sht As Worksheet
-        Set sht = ThisWorkbook.Sheets("拆分")
+        Set sht = wb.Sheets("拆分")
         sht.UsedRange.EntireColumn.AutoFit
         sht.Copy
         Dim wb0 As Workbook
@@ -104,10 +100,5 @@ On Error Resume Next
 DoEvents
 Next equipName
 
-'t2 = Format(Timer - t1, "#.00000")
-t2 = Timer - t1
+End Function
 
-Debug.Print "时间花费了：" & t2 & "秒"
-MsgBox "结束"
-
-End Sub
