@@ -52,7 +52,7 @@ c1 = LBound(arr, 2)
 c2 = UBound(arr, 2)
 
 Dim path As String
-path = ThisWorkbook.path & "\合并后"
+path = ThisWorkbook.path & "\拆分后"
 If Dir(path, vbDirectory) = "" Then
     MkDir path
 End If
