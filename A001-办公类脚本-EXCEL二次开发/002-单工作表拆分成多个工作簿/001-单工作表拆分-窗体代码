@@ -16,22 +16,27 @@ Dim SheetName As String
 Dim wbName As String
 Dim wb As Workbook
 Dim co1 As Integer
+Dim pathName As String
 
 Set rng = Range(originalText)
 With rng
     SheetName = .Parent.Name
     wbName = .Parent.Parent.Name
     Set wb = Workbooks(wbName)
+    pathName = wb.FullName
+    '关键步骤，运行宏才不会闪退
+    Set wb = Workbooks.Open(pathName)
     co1 = .Column
 End With
 
-
+'Debug.Print originalText
 'Debug.Print SheetName
 'Debug.Print wbName
-'Debug.Print rangeText
-'Debug.Print co1
+'Debug.Print pathName
  
 Call mainprocess.process(wb, rng, SheetName, co1)
+
+wb.Close False '不对打开的文档进行保存
 
 End
 
@@ -39,6 +44,8 @@ MsgBox "程序运行结束！"
 
 End Sub
 
-'Private Sub RefEdit1_BeforeDragOver(Cancel As Boolean, ByVal Data As MSForms.DataObject, ByVal x As stdole.OLE_XPOS_CONTAINER, ByVal y As stdole.OLE_YPOS_CONTAINER, ByVal DragState As MSForms.fmDragState, Effect As MSForms.fmDropEffect, ByVal Shift As Integer)
-
-'End Sub
+Private Sub RefEdit1_BeforeDragOver(Cancel As Boolean, ByVal Data As MSForms.DataObject, ByVal x As stdole.OLE_XPOS_CONTAINER, ByVal y As stdole.OLE_YPOS_CONTAINER, ByVal DragState As MSForms.fmDragState, Effect As MSForms.fmDropEffect, ByVal Shift As Integer)
+''''
+'选择单元格的控件
+''''
+End Sub
