@@ -20,15 +20,15 @@ Dim Xarr, Yarr, Zarr
 str = MeasureOut
 
 'X方向的值
-XstrPattern = "Pt2x = (-?\d+.?\d+)"
+XstrPattern = "Pt2x = (-?\d+\.?\d+)?"
 Xarr = strProcess(str, XstrPattern)
 
 'Y方向的值
-YstrPattern = "Pt2y = (-?\d+.?\d+)"
+YstrPattern = "Pt2y = (-?\d+\.?\d+)?"
 Yarr = strProcess(str, YstrPattern)
 
 'Z方向的值
-ZstrPattern = "Pt2z = (-?\d+.?\d+)"
+ZstrPattern = "Pt2z = (-?\d+\.?\d+)?"
 Zarr = strProcess(str, ZstrPattern)
 
 outputPathTxt = outputPath & "\" & "001-处理后结果.txt"
