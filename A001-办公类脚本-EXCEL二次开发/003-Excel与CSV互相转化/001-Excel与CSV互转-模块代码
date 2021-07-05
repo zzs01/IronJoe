@@ -1,0 +1,106 @@
+Option Explicit
+
+Sub Excel与csv互转()
+MyForm.Show
+End Sub
+Function FileList(ByVal startPath As String, ByVal filePattern As String) As Variant
+'''''''''''''''''''
+'取出所有xls或xlsx文件,忽略大小写
+'返回包含文件绝对路径的数组
+'
+'
+'''''''''''''''''''
+Dim fileName As String
+Dim k As Integer
+Dim arr() As Variant
+
+'获取文件夹下文件名称
+fileName = Dir(startPath & "\", vbNormal)
+Do
+    '使用like判断是否为excel文件
+    If fileName Like filePattern Then
+        k = k + 1
+        '重新定义数组大小，保持前面数据，一维数组可以使用
+        ReDim Preserve arr(1 To k)
+        '满足条件的写入数组
+        arr(k) = fileName
+    End If
+    '重新传入下一个文件名称
+    fileName = Dir
+    
+'循环至文件名为空
+Loop Until fileName = ""
+
+FileList = arr
+
+End Function
+
+Function FileOpen(ByVal startPath As String, ByVal filePattern As String, ByVal fileSuffix As String, ByVal fileFormat1 As String)
+
+Dim path As String
+path = startPath & "\001-转换后"
+
+If Dir(path, vbDirectory) = "" Then
+    MkDir path
+End If
+
+'屏幕不刷新
+Application.ScreenUpdating = False
+
+
+
+'获取合并文件列表，取出数组上下标号
+Dim arr As Variant
+Dim b1 As Integer
+Dim b2 As Integer
+arr = FileList(startPath, filePattern)
+If Not arrCheck(arr) Then
+    MsgBox "该路径下无对应文件"
+    End
+End If
+b1 = LBound(arr)
+b2 = UBound(arr)
+
+'错误处理
+On Error Resume Next
+
+'新建工作簿
+Dim wb As Workbook
+
+Dim x As Integer
+Dim fileName As String
+Dim arrName As Variant
+Dim wbName As String
+Dim suffixs As String '完整后缀名
+For x = b1 To b2
+    '打开原始文件位置
+    Set wb = Workbooks.Open(startPath & "\" & arr(x))
+    wb.Sheets(1).UsedRange.AutoFit
+    '保证替换万无一失
+    wbName = wb.Name
+    arrName = Split(wbName, ".")
+    suffixs = "." & arrName(UBound(arrName))
+    fileName = Replace(wbName, suffixs, "")
+    'Debug.Print fileName
+    '文件另存为，自动覆盖文件
+    Application.DisplayAlerts = False
+    wb.SaveAs fileName:=path & "\" & fileName & "." & fileSuffix, fileFormat:=fileFormat1, CreateBackup:=False
+    Application.DisplayAlerts = True
+    wb.Close
+    '交接控制权
+    DoEvents
+Next
+
+End Function
+
+Function arrCheck(arr) As Boolean
+'''''
+'判断数组是否为空
+'''''
+
+Dim i& '定义长整型
+On Error Resume Next
+i = UBound(arr)
+If Err = 0 Then arrCheck = True
+
+End Function
