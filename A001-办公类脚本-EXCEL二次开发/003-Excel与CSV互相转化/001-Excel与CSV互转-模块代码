@@ -75,7 +75,7 @@ Dim suffixs As String '完整后缀名
 For x = b1 To b2
     '打开原始文件位置
     Set wb = Workbooks.Open(startPath & "\" & arr(x))
-    wb.Sheets(1).UsedRange.AutoFit
+    wb.Sheets(1).UsedRange.Columns.AutoFit
     '保证替换万无一失
     wbName = wb.Name
     arrName = Split(wbName, ".")
