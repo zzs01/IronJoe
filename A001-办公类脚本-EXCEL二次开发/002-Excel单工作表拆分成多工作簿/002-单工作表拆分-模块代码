@@ -10,7 +10,7 @@ Function process(ByVal wb As Workbook, ByVal rng As Range, ByVal SheetName As St
 
 '屏幕不刷新
 Application.ScreenUpdating = False
-'Application.EnableEvents = False
+Application.EnableEvents = False
 
 'If rng Is Nothing Then End
 Dim arrHead As Variant '定义数组，用于存储表格拆分数据
@@ -101,7 +101,7 @@ On Error Resume Next
     End If
 DoEvents
 Next equipName
-'Application.EnableEvents = True
+Application.EnableEvents = True
 End Function
 
 
