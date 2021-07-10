@@ -1,0 +1,71 @@
+Sub CATMain()
+
+'最大的CATIA文档集合
+Dim OTOPdocs As Documents
+Set OTOPdocs = CATIA.Documents
+
+Dim OTopDoc As Document
+Dim TPName As String
+Dim OToproduct As Product
+Dim PartNum As String
+Dim PartNn As String
+
+'CATIA文件系统
+Dim oFileSys As Object
+Set oFileSys = CreateObject("Scripting.FileSystemObject")
+
+Dim x As Integer
+For x = 1 To OTOPdocs.Count
+    
+    '获取每一个子级
+    Set OTopDoc = OTOPdocs.Item(x)
+
+    TPName = TypeName(OTopDoc)
+    
+    '作为一个产品
+    Set OToproduct = OTopDoc.Product
+    
+    '获取零件编号
+    PartNum = OToproduct.PartNumber
+    
+    '获取实例名称
+    PartNn = OToproduct.Name
+    
+'    Debug.Print TPName
+'    Debug.Print PartNum
+'    Debug.Print PartNn
+    
+    Dim BeReplacedStr As String
+    Dim ReplacedStr As String
+    
+    BeReplacedStr = "zzs"
+    ReplacedStr = "Part"
+    If InStr(PartNum, BeReplacedStr) > 0 Then
+        OToproduct.PartNumber = VBA.Replace(PartNum, BeReplacedStr, ReplacedStr)
+        OToproduct.Name = OToproduct.PartNumber & ".1"
+        
+        Dim fileFullName As String
+        fileFullName = OTopDoc.FullName
+        
+        Dim filePath As String
+        Dim SpArr As Variant
+        Dim i As Integer
+        Dim partName As String
+        Dim suffix As String
+        
+        SpArr = VBA.Split(fileFullName, "\")
+        partName = SpArr(UBound(SpArr))
+        suffix = "." & VBA.Split(partName, ".")(1)
+        filePath = VBA.Replace(fileFullName, partName, "")
+        
+'        Debug.Print fileFullName
+'        Debug.Print filePath
+        OTopDoc.SaveAs filePath & OToproduct.PartNumber & suffix
+        oFileSys.DeleteFile fileFullName
+        
+    End If
+Next
+
+OTOPdocs.Item(1).Save
+
+End Sub
