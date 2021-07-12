@@ -1,14 +1,66 @@
+Option Explicit
+
+'*************************
+'Copyright by IronJoe
+'Date:2021/07/12
+'
+'*************************
+
 Sub CATMain()
 
+Dim oRootProduct As Product
+Set oRootProduct = CATIA.ActiveDocument.Product
+
+Debug.Print oRootProduct.Name
+
+Call GetPartNumber(oRootProduct)
+End Sub
+
+'递归函数
+Sub ChangeName(ByVal oProduct As Product)
+
+'****************************
+'
+'修改实例名称与零件编号一致，带.1
+'需要添加字典进行进一步修改
+'
+'****************************
+
+    ' 遍历根节点下直接集成的产品
+    Dim subProduct As Product
+    For Each subProduct In oProduct.Products
+    
+        ' 显示每个子产品的 partnumber
+        Debug.Print subProduct.Name
+        
+        '如果子产品下还有产品，可以采用递归算法得到下属每一级产品
+        If subProduct.Products.Count > 0 Then
+        
+            Call GetPartNumber(subProduct)
+            
+        End If
+        
+    Next
+    
+End Sub
+
+Function ChanSavePN(ByVal OTOPdocs As Documents)
+'**************************
+'
+'修改零件编号与保存文件
+'需要添加错误处理，部件判断，是否有无文档链接
+'添加掉链接处理
+'
+'**************************
+
 '最大的CATIA文档集合
-Dim OTOPdocs As Documents
+'Dim OTOPdocs As Documents
 Set OTOPdocs = CATIA.Documents
 
 Dim OTopDoc As Document
 Dim TPName As String
 Dim OToproduct As Product
 Dim PartNum As String
-Dim PartNn As String
 
 'CATIA文件系统
 Dim oFileSys As Object
@@ -28,13 +80,6 @@ For x = 1 To OTOPdocs.Count
     '获取零件编号
     PartNum = OToproduct.PartNumber
     
-    '获取实例名称
-    PartNn = OToproduct.Name
-    
-'    Debug.Print TPName
-'    Debug.Print PartNum
-'    Debug.Print PartNn
-    
     Dim BeReplacedStr As String
     Dim ReplacedStr As String
     
@@ -42,7 +87,6 @@ For x = 1 To OTOPdocs.Count
     ReplacedStr = "Part"
     If InStr(PartNum, BeReplacedStr) > 0 Then
         OToproduct.PartNumber = VBA.Replace(PartNum, BeReplacedStr, ReplacedStr)
-        OToproduct.Name = OToproduct.PartNumber & ".1"
         
         Dim fileFullName As String
         fileFullName = OTopDoc.FullName
@@ -53,19 +97,26 @@ For x = 1 To OTOPdocs.Count
         Dim partName As String
         Dim suffix As String
         
+        '获取零件名称，分割后缀以及路径
         SpArr = VBA.Split(fileFullName, "\")
         partName = SpArr(UBound(SpArr))
         suffix = "." & VBA.Split(partName, ".")(1)
         filePath = VBA.Replace(fileFullName, partName, "")
         
-'        Debug.Print fileFullName
-'        Debug.Print filePath
+        '文件保存无提示
+        CATIA.DisplayFileAlerts = False
         OTopDoc.SaveAs filePath & OToproduct.PartNumber & suffix
+        CATIA.DisplayFileAlerts = True
+        
+        '删除原文件
         oFileSys.DeleteFile fileFullName
         
     End If
+    DoEvents
 Next
 
+CATIA.DisplayFileAlerts = False
 OTOPdocs.Item(1).Save
+CATIA.DisplayFileAlerts = True
 
-End Sub
+End Function
