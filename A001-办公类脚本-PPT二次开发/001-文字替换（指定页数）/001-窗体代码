@@ -1,0 +1,43 @@
+Option Explicit
+
+Private Sub CancelBTN_Click()
+End
+End Sub
+
+Private Sub ConfirmBTN_Click()
+
+Dim x As Integer
+Dim sld As Slide '幻灯片
+Dim shp As Shape '对象
+Dim Pattern1 As String
+Dim Pattern2 As String
+
+Pattern1 = "(U\d{3})?L(_\d{3})?L"
+Pattern2 = "_(U\d{3})?L$"
+
+Dim p1 As Integer
+Dim p2 As Integer
+Dim p As Integer
+
+p1 = FirstPageTB.Value
+
+p1 = CInt(p1)
+'p2 = CInt(p2)
+
+'For p = p1 To p2
+'Debug.Print p1
+    Set sld = ActivePresentation.Slides(p1)
+    For Each shp In sld.Shapes
+        'Debug.Print shp.Name
+        Call mainProcess.TextFrame(shp, Pattern1)
+        Call mainProcess.TableText(shp, Pattern1)
+        Call mainProcess.TextFrame2(shp, Pattern2)
+    Next
+'Next p
+End '防止全局变量x进行累积
+
+End Sub
+
+Private Sub TextBox1_Change()
+
+End Sub
