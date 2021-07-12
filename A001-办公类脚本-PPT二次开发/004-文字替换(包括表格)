@@ -1,0 +1,189 @@
+'''''''''''''''''
+'XYZ值批量替换
+'
+''''''''''''''''
+Option Explicit
+
+Sub 批量替换文字()
+
+MyForm.Show
+
+End Sub
+
+Function TextFrame(ByVal shp As Shape, ByVal Pattern As String)
+'***************************
+'针对文本框
+'
+'***************************
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim i As Integer
+Dim shpName As String
+Dim targetStr As String
+Dim mhStr1 As String
+Dim mhStr2 As String
+Dim mhStr3 As String
+Dim beReplacedStr As String
+Dim ReplacedStr As String
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = Pattern
+
+'通过名称判断是否是一个组合
+shpName = shp.Name
+
+'如果是组合则重复调用function
+If InStr(shpName, "Group") = 1 Then
+    For i = 1 To shp.GroupItems.Count
+        Call TextFrame(shp.GroupItems(i), Pattern)
+    Next
+ElseIf shp.HasTextFrame Then '判断是否含有文本框
+    If shp.TextFrame.HasText Then '判断文本框是否含有文本
+        targetStr = shp.TextFrame.TextRange '提取文本中的内容
+        If RE.test(targetStr) Then
+            Set matchs = RE.Execute(targetStr)
+            For Each match In matchs
+                mhStr1 = match.submatches(0)
+                mhStr2 = match.submatches(1)
+                beReplacedStr = mhStr1 & "L" & mhStr2 & "L"
+                ReplacedStr = mhStr1 & "R" & mhStr2 & "R"
+                shp.TextFrame.TextRange = Replace(targetStr, beReplacedStr, ReplacedStr)
+                'Debug.Print mhStr2
+                'Debug.Print mhStr1
+            Next match
+        End If
+    End If
+End If
+
+End Function
+
+
+Function TableText(ByVal shp As Shape, ByVal Pattern As String)
+'***************************
+'针对表格
+'
+'***************************
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim i As Integer
+Dim shpName As String
+Dim targetStr As String
+Dim mhStr1 As String
+Dim mhStr2 As String
+Dim mhStr3 As String
+Dim beReplacedStr As String
+Dim ReplacedStr As String
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = Pattern
+
+'通过名称判断是否是一个组合
+shpName = shp.Name
+
+
+'如果是组合则重复调用function
+If InStr(shpName, "Group") = 1 Then
+    For i = 1 To shp.GroupItems.Count
+        Call TextFrame(shp.GroupItems(i), Pattern)
+    Next
+ElseIf shp.HasTable Then '判断是否含有文本框
+    Dim co As Integer '列数
+    Dim ro As Integer '行数
+    Dim c As Integer
+    Dim r As Integer
+    
+    co = shp.Table.Columns.Count
+    ro = shp.Table.Rows.Count
+    For r = 1 To ro
+        For c = 1 To co
+            With shp.Table.Cell(r, c).Shape
+            If .HasTextFrame Then
+                targetStr = .TextFrame.TextRange.Text '提取文本中的内容
+                If RE.test(targetStr) Then
+                    Set matchs = RE.Execute(targetStr)
+                    For Each match In matchs
+                        mhStr1 = match.submatches(0)
+                        mhStr2 = match.submatches(1)
+                        beReplacedStr = mhStr1 & "L" & mhStr2 & "L"
+                        ReplacedStr = mhStr1 & "R" & mhStr2 & "R"
+                        .TextFrame.TextRange.Text = Replace(targetStr, beReplacedStr, ReplacedStr)
+                    Next match
+                End If
+            End If
+            End With
+        Next c
+    Next r
+End If
+
+End Function
+
+Function TextFrame2(ByVal shp As Shape, ByVal Pattern As String)
+'***************************
+'针对文本框
+'
+'***************************
+
+Dim RE As Object
+Dim match As Object
+Dim matchs As Object
+Dim i As Integer
+Dim shpName As String
+Dim targetStr As String
+Dim mhStr1 As String
+Dim mhStr2 As String
+Dim mhStr3 As String
+Dim beReplacedStr As String
+Dim ReplacedStr As String
+
+'获取Regular Expression 组件
+Set RE = CreateObject("Vbscript.RegExp")
+
+'搜索整个字符串
+RE.Global = True
+
+'正则匹配
+RE.Pattern = Pattern
+
+'通过名称判断是否是一个组合
+shpName = shp.Name
+
+'如果是组合则重复调用function
+If InStr(shpName, "Group") = 1 Then
+    For i = 1 To shp.GroupItems.Count
+        Call TextFrame(shp.GroupItems(i), Pattern)
+    Next
+ElseIf shp.HasTextFrame Then '判断是否含有文本框
+    If shp.TextFrame.HasText Then '判断文本框是否含有文本
+        targetStr = shp.TextFrame.TextRange '提取文本中的内容
+        If RE.test(targetStr) Then
+            Set matchs = RE.Execute(targetStr)
+            For Each match In matchs
+                mhStr1 = match.submatches(0)
+                beReplacedStr = mhStr1 & "L"
+                ReplacedStr = mhStr1 & "R"
+                'Debug.Print mhStr1
+                shp.TextFrame.TextRange = Replace(targetStr, beReplacedStr, ReplacedStr)
+                'Debug.Print mhStr2
+                'Debug.Print mhStr1
+            Next match
+        End If
+    End If
+End If
+
+End Function
