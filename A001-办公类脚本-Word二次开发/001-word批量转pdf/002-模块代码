@@ -1,0 +1,93 @@
+Option Explicit
+
+Sub Word批量转格式()
+MyForm.Show
+End Sub
+
+Function docFileList(ByVal startPath As String) As Variant
+
+'''''''''''''''''''
+'取出所有xls或xlsx文件,忽略大小写
+'返回包含文件绝对路径的数组
+'
+'
+'''''''''''''''''''
+Dim FileName As String
+Dim k As Integer
+Dim arr() As Variant
+
+FileName = Dir(startPath & "\", vbNormal)
+Do
+    If FileName Like "*.[Dd][Oo][Cc]*" Then
+        k = k + 1
+        ReDim Preserve arr(1 To k)
+        arr(k) = FileName
+        'Debug.Print Filename
+    End If
+    FileName = Dir
+Loop Until FileName = ""
+
+docFileList = arr
+
+End Function
+
+Function DocOpen(ByVal startPath As String)
+
+'屏幕不刷新
+Application.ScreenUpdating = False
+
+Dim arr As Variant
+arr = docFileList(startPath)
+
+On Error Resume Next
+
+Dim b1 As Integer
+Dim b2 As Integer
+Dim x As Integer
+
+b1 = LBound(arr)
+b2 = UBound(arr)
+
+Dim Doc0 As Document
+
+Dim nameArr As Variant
+Dim nb2 As Integer
+Dim suffix As String
+Dim FileName As String
+Dim FullName As String
+
+For x = b1 To b2
+    DoEvents
+    nameArr = Split(arr(x), ".")
+    nb2 = UBound(nameArr)
+    suffix = "." & nameArr(nb2)
+    FileName = Replace(arr(x), suffix, "")
+    
+    '自动覆盖文件
+    Application.DisplayAlerts = False
+
+    Set Doc0 = Documents.Open(startPath & "\" & arr(x))
+    
+    '文件完整路径名
+    FullName = startPath & "\" & FileName & ".pdf"
+    
+    Doc0.ExportAsFixedFormat OutputFileName:=FullName, _
+        ExportFormat:=wdExportFormatPDF, _
+        OpenAfterExport:=False, _
+        OptimizeFor:=wdExportOptimizeForPrint, _
+        Range:=wdExportAllDocument, _
+        From:=1, To:=1, _
+        Item:=wdExportDocumentWithMarkup, _
+        IncludeDocProps:=True, _
+        KeepIRM:=True, _
+        CreateBookmarks:=wdExportCreateWordBookmarks, _
+        DocStructureTags:=True, _
+        BitmapMissingFonts:=True, UseISO19005_1:=False
+        
+    Doc0.Close
+    
+    Application.DisplayAlerts = True
+    
+Next
+
+End Function
