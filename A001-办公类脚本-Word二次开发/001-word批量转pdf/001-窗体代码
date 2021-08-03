@@ -1,0 +1,46 @@
+Private Sub ConfirmBTN_Click()
+
+Dim startPath As String
+startPath = PathBox.Text
+Call FunctionModel.DocOpen(startPath)
+
+End
+
+End Sub
+
+Private Sub PathChooseBTN_Click()
+
+Dim FolderDialogObject As Object
+Dim paths As Object
+
+'新建一个对话框对象
+Set FolderDialogObject = Application.FileDialog(msoFileDialogFolderPicker)
+
+'配置对话框
+
+With FolderDialogObject
+
+    .Title = "请选择要查找的文件夹"
+
+    .InitialFileName = "C:\"
+
+End With
+'显示对话框
+
+FolderDialogObject.Show
+
+'获取选择对话框选择的文件夹
+
+Set paths = FolderDialogObject.SelectedItems
+
+If paths.Count <> 0 Then
+    PathBox.Text = paths(1)
+Else
+    PathBox.Text = ""
+End If
+
+End Sub
+
+Private Sub CnacelBTN_Click()
+End
+End Sub
