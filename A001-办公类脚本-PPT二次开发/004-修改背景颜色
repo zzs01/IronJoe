@@ -1,0 +1,38 @@
+'Created by IronJoe'
+'Date 2021/10/05'
+
+Option Explicit
+
+Sub ChangeBGColor()
+
+'修改带有某关键词的幻灯片的背景颜色
+'
+'
+
+Dim sld As Slide
+Dim shp As Shape
+Dim x As Integer
+
+Dim targetStr As String
+
+'关键词
+Dim OriginalStr As String
+OriginalStr = "CLOSED"
+
+x = 0
+
+'遍历整个PPT
+For Each sld In ActivePresentation.Slides
+    For Each shp In sld.Shapes
+        If shp.HasTextFrame Then '判断是否含有文本框
+            If shp.TextFrame.HasText Then '判断文本框是否含有文本
+                targetStr = shp.TextFrame.TextRange '提取文本中的内容
+                If targetStr Like OriginalStr Then
+                    sld.FollowMasterBackground = msoFalse
+                    sld.Background.Fill.ForeColor.RGB = RGB(146, 208, 80)
+                End If
+            End If
+        End If
+    Next
+Next
+End Sub
