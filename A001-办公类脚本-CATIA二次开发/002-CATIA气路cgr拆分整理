@@ -26,55 +26,56 @@ Dim arr As Variant
 Dim VLVText As String
 
 Dim i As Integer
-'气路拆分比较
 For i = products1.Count To 1 Step -1
     Set productCut = products1.Item(i)
     productCut.Name = productCut.partNumber & ".1"
     
     partNumber = UCase(productCut.partNumber)
-    If InStr(partNumber, "CYL") <> 0 Then
-        arr = Split(partNumber, "_")
-        splitText = arr(UBound(arr))
-        If Len(splitText) > 5 Then
-            VLVText = "VLV" & Mid$(splitText, 4, 2)
+    If Len(partNumber) > 10 Then '利用长度限制二次操作
+        If InStr(partNumber, "CYL") <> 0 Then
+            arr = Split(partNumber, "_")
+            splitText = arr(UBound(arr))
+            If Len(splitText) > 5 Then
+                VLVText = "VLV" & Mid$(splitText, 4, 2)
+            Else
+                VLVText = "VLV0" & Mid$(splitText, 4, 1)
+            End If
         Else
-            VLVText = "VLV0" & Mid$(splitText, 4, 1)
+            VLVText = "FIX"
         End If
-    Else
-        VLVText = "FIX"
+        
+        If Not dic.Exists(VLVText) Then
+            dic.Add VLVText, VLVText & ".1"
+            Dim productVLV As Product
+            Set productVLV = products1.AddNewProduct(VLVText)
+        End If
+        
+        '粘贴板的剪切处理
+        Dim selection2
+        Set selection2 = productDocument1.Selection
+        selection2.Clear
+        
+        selection2.Add productCut
+        selection2.Cut
+        
+        '粘贴板的粘贴处理
+        Dim selection3
+        Set selection3 = productDocument1.Selection
+        selection3.Clear
+        
+        Dim productPaste As Product
+        Set productPaste = products1.GetItem(dic(VLVText))
+        
+        selection3.Add productPaste
+        selection3.Paste
     End If
-    
-    '字典判断是否已存在
-    If Not dic.Exists(VLVText) Then
-        dic.Add VLVText, VLVText & ".1"
-        Dim productVLV As Product
-        Set productVLV = products1.AddNewProduct(VLVText)
-    End If
-    
-    '粘贴板的剪切处理
-    Dim selection2
-    Set selection2 = productDocument1.Selection
-    selection2.Clear
-    
-    selection2.Add productCut
-    selection2.Cut
-    
-    '粘贴板的粘贴处理
-    Dim selection3
-    Set selection3 = productDocument1.Selection
-    selection3.Clear
-    
-    Dim productPaste As Product
-    Set productPaste = products1.GetItem(dic(VLVText))
-    
-    selection3.Add productPaste
-    selection3.Paste
-    
+    DoEvents
 Next i
+
+'保存文档
+'productDocument1.Save
 
 MsgBox "程序运行结束，请检查，谢谢！"
 
 
 End Sub
-
-        
