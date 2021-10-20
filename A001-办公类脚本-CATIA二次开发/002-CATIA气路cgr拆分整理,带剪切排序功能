@@ -72,6 +72,8 @@ For i = products1.Count To 1 Step -1
     DoEvents
 Next i
 
+ReorderGraphTree
+
 '保存文档
 'productDocument1.Save
 
@@ -79,3 +81,71 @@ MsgBox "程序运行结束，请检查，谢谢！"
 
 
 End Sub
+
+Function ReorderGraphTree()
+
+    Set productDocument1 = CATIA.ActiveDocument
+    
+    Dim product1 As Product
+    Set product1 = productDocument1.Product
+    
+    Dim products1 As Products
+    Set products1 = product1.Products
+    
+    Dim i As Integer
+    
+    Dim productCut As Product
+    
+    Dim PdCount As Integer
+    PdCount = products1.Count
+    
+    Dim MInIndex As Integer
+    Dim j As Integer
+    Dim VLVNUm1 As Integer
+    Dim VLVNUm2 As Integer
+    
+    Dim PartNumber1 As String
+    Dim PartNumber2 As String
+    
+    For i = PdCount To 1 Step -1
+        MInIndex = i
+        
+        PartNumber1 = products1.Item(i).PartNumber
+        
+        If InStr(PartNumber1, "FIX") = 0 Then
+            VLVNUm1 = Int(Mid$(PartNumber1, 4, 2))
+            For j = 1 To i - 1
+                PartNumber2 = products1.Item(j).PartNumber
+                If InStr(PartNumber2, "FIX") = 0 Then
+                    VLVNUm2 = Int(Mid$(PartNumber2, 4, 2))
+                    If VLVNUm2 < VLVNUm1 Then
+                        MInIndex = j
+                        VLVNUm1 = VLVNUm2
+                    End If
+                Else
+                    MInIndex = j
+                    Exit For
+                End If
+            Next
+        End If
+        '粘贴板的剪切处理
+        Set productCut = products1.Item(MInIndex)
+        Dim selection2 As Selection
+        Set selection2 = productDocument1.Selection
+        selection2.Clear
+        
+        selection2.Add productCut
+        selection2.Cut
+        
+        '粘贴板的粘贴处理
+        Dim section1 As Selection
+        Set section1 = productDocument1.Selection
+    
+        ' select top product in a CATIA tree
+        section1.Clear
+        section1.Add product1
+        section1.Paste
+    Next
+
+End Function
+
