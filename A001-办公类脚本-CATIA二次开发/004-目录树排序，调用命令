@@ -1,0 +1,123 @@
+Option Explicit
+'调用命令进行排序
+'已完成：窗口聚焦
+'问题：窗口聚焦后没有起到实际作用，调用其他按钮后已聚焦的list失效
+'
+'
+'
+
+Sub CATMain()
+    Dim CATIA, doc, prod, sel
+    
+    Set CATIA = GetObject(, "CATIA.Application")    ' get CATIA Application
+    Set doc = CATIA.ActiveDocument
+    Set prod = doc.Product
+    Set sel = doc.Selection
+    
+    ' select top product in a CATIA tree
+    sel.Clear
+    sel.Add prod
+    
+    ' launch "Graph tree reordering" command
+    CATIA.StartCommand "Graph tree reordering"
+    
+    Dim winAutomation As CUIAutomation
+    Set winAutomation = New CUIAutomation
+    
+    Dim desktop As IUIAutomationElement
+    ' get reference to the root element (desktop)
+    Set desktop = winAutomation.GetRootElement
+    
+    Dim allWindowsCond As IUIAutomationCondition
+    ' retrieves a predefined condition that selects all elements
+    Set allWindowsCond = winAutomation.CreateTrueCondition
+    
+    Dim childs As IUIAutomationElementArray
+    ' find all elements & put them into element array
+    Set childs = desktop.FindAll(TreeScope_Children, allWindowsCond)
+    
+    Dim i As Long, currChild As IUIAutomationElement
+    Dim catiaWindow As IUIAutomationElement
+    
+    ' loop through all element and find CATIA by window name which contains "CATIA V5" string
+    For i = 0 To childs.Length - 1
+        Set currChild = childs.GetElement(i)
+        
+        If InStr(currChild.CurrentName, "CATIA V5") Then
+            Set catiaWindow = currChild ' set main catia window
+        End If
+        
+        'Debug.Print currChild.CurrentName, currChild.CurrentClassName
+    Next
+    
+    Dim graphWinCond As IUIAutomationCondition
+    Set graphWinCond = winAutomation.CreatePropertyCondition(UIA_NamePropertyId, "Graph tree reordering")
+    
+    Dim graphWin As IUIAutomationElement
+    
+    'wait for Graph window to open and get it
+    Do
+        Set graphWin = catiaWindow.FindFirst(TreeScope_Children, graphWinCond)
+        
+        ' do not freeze application in case of infinite loop
+        DoEvents
+    Loop While graphWin Is Nothing
+    
+    ' get OK button
+    Dim btnOKCondition As IUIAutomationCondition, btnOk As IUIAutomationElement
+    
+    Set btnOKCondition = winAutomation.CreatePropertyCondition(UIA_NamePropertyId, "OK")
+    Set btnOk = graphWin.FindFirst(TreeScope_Children, btnOKCondition)
+    
+    ' get Move Down button
+    Dim btnMoveDownCondition As IUIAutomationCondition, btnMoveDown As IUIAutomationElement
+
+    Set btnMoveDownCondition = winAutomation.CreatePropertyCondition(UIA_NamePropertyId, "Move Down")
+    Set btnMoveDown = graphWin.FindFirst(TreeScope_Descendants, btnMoveDownCondition)
+    
+    ' control pattern definition (button click)
+    Dim patMoveDown As IUIAutomationInvokePattern, patOK As IUIAutomationInvokePattern
+    
+    Set patMoveDown = btnMoveDown.GetCurrentPattern(UIA_InvokePatternId)
+    Set patOK = btnOk.GetCurrentPattern(UIA_InvokePatternId)
+    
+    ' find all elements & put them into element array
+    Set childs = graphWin.FindAll(TreeScope_Children, allWindowsCond)
+    
+    Dim childs2 As IUIAutomationElementArray
+    Dim currChild2 As IUIAutomationElement
+    Dim j As Integer
+    
+    For i = 0 To childs.Length - 1
+            Set currChild = childs.GetElement(i)
+            'Debug.Print currChild.CurrentName 'OK ,Apply, Cancel
+            If currChild.CurrentName = "FrameWindow" Then
+                Set childs2 = currChild.FindAll(TreeScope_Children, allWindowsCond)
+                'Debug.Print childs2.GetElement(j).CurrentName 'FrameList,FrameAction
+                If childs2.GetElement(1).CurrentName = "FrameList" Then
+                    Set childs2 = childs2.GetElement(1).FindAll(TreeScope_Children, allWindowsCond)
+                    Set currChild2 = childs2.GetElement(1)
+                    Set childs2 = currChild2.FindAll(TreeScope_Children, allWindowsCond)
+                    
+                    childs2.GetElement(2).GetRuntimeId
+                    childs2.GetElement(2).SetFocus
+                    childs2.GetElement(2).FindAllBuildCache
+                    DoEvents
+                    Debug.Print childs2.Length
+                    'SendKeys Chr("32")
+                    '中英文的长度不一致
+                    
+                    'patMoveDown.Invoke
+                    Exit For
+                End If
+            End If
+
+        'patMoveDown.Invoke
+    'Next
+    Next
+
+    'patOK.Invoke
+End Sub
+
+
+
