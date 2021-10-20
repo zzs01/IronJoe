@@ -75,7 +75,9 @@ Next i
 ReorderGraphTree
 
 '保存文档
-'productDocument1.Save
+Set productDocument1 = CATIA.ActiveDocument
+
+productDocument1.Save
 
 MsgBox "程序运行结束，请检查，谢谢！"
 
