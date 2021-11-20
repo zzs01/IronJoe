@@ -7,6 +7,7 @@ Sub CATMain()
 '1.保存
 '2.排序
 '3.自动打开处理后关闭，批量处理
+'4.着色处理
 ''''''''''''''''
 Set productDocument1 = CATIA.ActiveDocument
 
