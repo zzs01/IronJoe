@@ -1,14 +1,18 @@
 Sub CATMain()
+
 '''''''''''''''''
 'CATIA气路cgr拆分整理
 '1.拆分VLV
-'
-'待完善
-'1.保存
-'2.排序
-'3.自动打开处理后关闭，批量处理
-'4.着色处理
-''''''''''''''''
+'2.添加了程序运行时间显示
+'3.随机着色处理
+
+'暂不考虑，仅作为气路评审使用
+'1.自动打开处理后关闭，批量处理
+Dim t1 As Date
+
+t1 = Timer
+
+Dim productDocument1 As Document
 Set productDocument1 = CATIA.ActiveDocument
 
 Dim product1 As Product
@@ -21,7 +25,7 @@ Dim dic As Object
 Set dic = CreateObject("scripting.dictionary")
 
 Dim productCut As Product
-Dim partNumber As String
+Dim PartNumber As String
 Dim splitText As String
 Dim arr As Variant
 Dim VLVText As String
@@ -29,12 +33,12 @@ Dim VLVText As String
 Dim i As Integer
 For i = products1.Count To 1 Step -1
     Set productCut = products1.Item(i)
-    productCut.Name = productCut.partNumber & ".1"
+    productCut.Name = productCut.PartNumber & ".1"
     
-    partNumber = UCase(productCut.partNumber)
-    If Len(partNumber) > 10 Then '利用长度限制二次操作
-        If InStr(partNumber, "CYL") <> 0 Then
-            arr = Split(partNumber, "_")
+    PartNumber = UCase(productCut.PartNumber)
+    If Len(PartNumber) > 10 Then '利用长度限制二次操作
+        If InStr(PartNumber, "CYL") <> 0 Then
+            arr = Split(PartNumber, "_")
             splitText = arr(UBound(arr))
             If Len(splitText) > 5 Then
                 VLVText = "VLV" & Mid$(splitText, 4, 2)
@@ -76,17 +80,18 @@ Next i
 ReorderGraphTree
 
 '保存文档
-Set productDocument1 = CATIA.ActiveDocument
+'Set productDocument1 = CATIA.ActiveDocument
+'
+'productDocument1.Save
 
-productDocument1.Save
-
-MsgBox "程序运行结束，请检查，谢谢！"
-
+MsgBox "程序运行结束，请检查，谢谢！" & vbCrLf & "程序运行时间：" & Format$(Timer - t1, "0.00") & "s"
 
 End Sub
 
 Function ReorderGraphTree()
 
+    '剪切排序处理
+    Dim productDocument1 As Document
     Set productDocument1 = CATIA.ActiveDocument
     
     Dim product1 As Product
@@ -151,4 +156,53 @@ Function ReorderGraphTree()
     Next
 
 End Function
+
+Function AddColor()
+    '增加颜色
+    '随机数不重复，待添加
+    Dim productDocument1 As Document
+    Set productDocument1 = CATIA.ActiveDocument
+    
+    Dim product1 As Product
+    Set product1 = productDocument1.Product
+    
+    Dim products1 As Products
+    Set products1 = product1.Products
+    
+    'RGB颜色控制
+    Dim r1 As Long
+    Dim g1 As Long
+    Dim b1 As Long
+    
+    '产品当前层级数量
+    Dim PdCount As Integer
+    PdCount = products1.Count
+    
+    Dim productAddCol As Product
+    '第一个不进行上色
+    Dim i As Integer
+    For i = 2 To PdCount
+    
+        Set productAddCol = products1.Item(i)
+        
+        Dim selection1 As Selection
+        Set selection1 = productDocument1.Selection
+        
+        selection1.Add productAddCol
+        
+        Dim Obj As Object
+        Set Obj = selection1.VisProperties
+        
+        '随机整数公式为“int（（上限-下限+1）*Rnd+下限）”
+        r1 = Int((25 - 1 + 1) * Rnd + 1)
+        g1 = Int((25 - 1 + 1) * Rnd + 1)
+        b1 = Int((25 - 1 + 1) * Rnd + 1)
+        
+        Obj.SetRealColor 10 * r1, 10 * b1, 10 * g1, 0
+        
+        selection1.Clear
+    Next
+End Function
+
+
 
