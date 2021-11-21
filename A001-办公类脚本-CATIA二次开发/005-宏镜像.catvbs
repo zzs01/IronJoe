@@ -1,0 +1,66 @@
+' Mirror of Parts and Products  according to XZ,YZ,XY plane, (c) ema, lm:26.3.2009
+'
+symPlane = "xy" 'Default value, (xz,yz,xy)
+'
+Sub CATMain()
+  Set objNetwork = CreateObject("Wscript.Network")
+  Dim InputObjectType(0)
+  InputObjectType(0)="CATIAProduct"
+  Dim Matrix(11)
+  msgboxtext="e3symetry - plane of symetry: " & ucase(symPlane)
+' ******************************* run *************************************************
+  Status=CATIA.ActiveDocument.Selection.SelectElement2(InputObjectType,"Select product or part",false)
+  if(Status = "Cancel")then Exit Sub
+  rc=msgbox(n & "                  REPLACE .............. YES" & vbCrLf & _
+       vbCrLf & "                  DUPLICATE ............ NO",vbYesNoCancel+vbDefaultButton1 ,msgboxtext)
+  if(rc = vbCancel)then Exit Sub
+  if(Status = "Cancel")then Exit Sub
+
+' set prod1=CATIA.ActiveDocument.Selection.FindObject("CATIAProduct")
+  if(rc = vbNo)then
+    name1="SYMETRY - " & CATIA.ActiveDocument.Selection.item(1).reference.name
+    CATIA.ActiveDocument.Selection.Copy
+    CATIA.ActiveDocument.Selection.Clear
+    CATIA.ActiveDocument.Selection.add CATIA.ActiveDocument.Product
+    CATIA.ActiveDocument.Selection.Paste
+  end if
+  set prod2=CATIA.ActiveDocument.Selection.item(1).value
+  On Error Resume Next
+  if(rc = vbYes)then prod2.name=name1
+'  Dim InputObjectType1(0)
+'  InputObjectType1(0)="AnyObject"
+'  Status=CATIA.ActiveDocument.Selection.SelectElement2(InputObjectType1,"Vyber rovinu symetrie",false)
+'  if(Status = "Cancel")then Exit Sub
+'msgbox CATIA.ActiveDocument.Selection.Item(1).reference.DisplayName
+'msgbox CATIA.ActiveDocument.Selection.Item(1).reference.parent.name
+' symPlane = InputBox("rovina sym: xz, yz, xy ?", "rovina sym ?", symPlane)
+  If (symPlane <> "") Then
+     dDirection = symPlane
+  End If
+' msgbox dDirection
+  If (dDirection = "xz") Then
+    Matrix(0) = 1.0 
+    Matrix(4) =-1.0 
+    Matrix(8) = 1.0 
+  End If
+  If (dDirection = "yz") Then
+    Matrix(0) =-1.0 
+    Matrix(4) = 1.0 
+    Matrix(8) = 1.0 
+  End If
+  If (dDirection = "xy") Then
+    Matrix(0) = 1.0 
+    Matrix(4) = 1.0 
+    Matrix(8) =-1.0 
+  End If
+  Matrix(1) = 0.0 
+  Matrix(2) = 0.0 
+  Matrix(3) = 0.0 
+  Matrix(5) = 0.0 
+  Matrix(6) = 0.0 
+  Matrix(7) = 0.0 
+  Matrix(9) = 0.0 
+  Matrix(10) = 0.0 
+  Matrix(11) = 0.0
+  prod2.Move.Apply Matrix
+End Sub
