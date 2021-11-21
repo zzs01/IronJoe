@@ -84,6 +84,7 @@ For i = products1.Count To 1 Step -1
 Next i
 
 ReorderGraphTree
+AddColor
 
 '保存文档
 'Set productDocument1 = CATIA.ActiveDocument
