@@ -212,7 +212,8 @@ Function AddColor()
         
         If i = 1 Then
             Obj.SetRealColor 255, 255, 255, 1
+        Else
+            Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 1
         End If
-        Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 1
     Next
 End Function
