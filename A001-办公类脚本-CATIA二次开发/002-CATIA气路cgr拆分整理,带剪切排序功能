@@ -165,7 +165,7 @@ Function ReorderGraphTree()
 End Function
 
 Function AddColor()
-    '增加颜色
+       '增加颜色
     '随机数不重复，待添加
     Dim productDocument1 As Document
     Set productDocument1 = CATIA.ActiveDocument
@@ -186,18 +186,19 @@ Function AddColor()
     PdCount = products1.Count
     
     Dim productAddCol As Product
+    Dim selection1 As Selection
+    Dim Obj As VisPropertySet
     '第一个不进行上色
     Dim i As Integer
     For i = 2 To PdCount
     
         Set productAddCol = products1.Item(i)
         
-        Dim selection1 As Selection
         Set selection1 = productDocument1.Selection
+        selection1.Clear
         
         selection1.Add productAddCol
         
-        Dim Obj As Object
         Set Obj = selection1.VisProperties
         
         '随机整数公式为“int（（上限-下限+1）*Rnd+下限）”
@@ -205,8 +206,6 @@ Function AddColor()
         g1 = Int((25 - 1 + 1) * Rnd + 1)
         b1 = Int((25 - 1 + 1) * Rnd + 1)
         
-        Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 0
-        
-        selection1.Clear
+        Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 1
     Next
 End Function
