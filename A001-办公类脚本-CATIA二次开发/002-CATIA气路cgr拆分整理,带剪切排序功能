@@ -205,7 +205,7 @@ Function AddColor()
         g1 = Int((25 - 1 + 1) * Rnd + 1)
         b1 = Int((25 - 1 + 1) * Rnd + 1)
         
-        Obj.SetRealColor 10 * r1, 10 * b1, 10 * g1, 0
+        Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 0
         
         selection1.Clear
     Next
