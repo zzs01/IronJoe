@@ -12,6 +12,7 @@ Sub CATMain()
 
 '暂不考虑，仅作为气路评审使用
 '1.自动打开处理后关闭，批量处理
+On Error Resume Next
 Dim t1 As Date
 
 t1 = Timer
