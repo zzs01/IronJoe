@@ -6,6 +6,10 @@ Sub CATMain()
 '2.添加了程序运行时间显示
 '3.随机着色处理
 
+'待完善
+'不能只在当前层级进行上色，只有继承 1 才能成功上色
+
+
 '暂不考虑，仅作为气路评审使用
 '1.自动打开处理后关闭，批量处理
 Dim t1 As Date
@@ -190,7 +194,7 @@ Function AddColor()
     Dim Obj As VisPropertySet
     '第一个不进行上色
     Dim i As Integer
-    For i = 2 To PdCount
+    For i = 1 To PdCount
     
         Set productAddCol = products1.Item(i)
         
@@ -206,6 +210,9 @@ Function AddColor()
         g1 = Int((25 - 1 + 1) * Rnd + 1)
         b1 = Int((25 - 1 + 1) * Rnd + 1)
         
+        If i = 1 Then
+            Obj.SetRealColor 255, 255, 255, 1
+        End If
         Obj.SetRealColor 10 * r1, 10 * g1, 10 * b1, 1
     Next
 End Function
