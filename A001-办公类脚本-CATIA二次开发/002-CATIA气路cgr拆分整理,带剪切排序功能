@@ -38,6 +38,12 @@ For i = products1.Count To 1 Step -1
     PartNumber = UCase(productCut.PartNumber)
     If Len(PartNumber) > 10 Then '利用长度限制二次操作
         If InStr(PartNumber, "CYL") <> 0 Then
+        
+            '防错，"-" 与 "_"
+            If InStr(PartNumber, "-") <> 0 Then
+                PartNumber = VBA.Replace(PartNumber, "-", "_")
+            End If
+            
             arr = Split(PartNumber, "_")
             splitText = arr(UBound(arr))
             If Len(splitText) > 5 Then
@@ -203,6 +209,3 @@ Function AddColor()
         selection1.Clear
     Next
 End Function
-
-
-
