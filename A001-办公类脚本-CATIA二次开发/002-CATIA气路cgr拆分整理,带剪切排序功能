@@ -41,55 +41,48 @@ For i = products1.Count To 1 Step -1
     productCut.Name = productCut.PartNumber & ".1"
     
     PartNumber = UCase(productCut.PartNumber)
-    If Len(PartNumber) > 10 Then '利用长度限制二次操作
-        If InStr(PartNumber, "CYL") <> 0 Then
-        
-            '防错，"-" 与 "_"
-            If InStr(PartNumber, "-") <> 0 Then
-                PartNumber = VBA.Replace(PartNumber, "-", "_")
-            End If
-            
-            arr = Split(PartNumber, "_")
-            splitText = arr(UBound(arr))
-            If Len(splitText) > 5 Then
-                VLVText = "VLV" & Mid$(splitText, 4, 2)
-            Else
-                VLVText = "VLV0" & Mid$(splitText, 4, 1)
-            End If
+    If InStr(PartNumber, "CYL") <> 0 Then
+        arr = Split(PartNumber, "CYL")
+        splitText = arr(UBound(arr))
+        If Len(splitText) > 2 Then
+            VLVText = "VLV" & Left$(splitText, 2)
         Else
-            VLVText = "FIX"
+            VLVText = "VLV0" & Left$(splitText, 1)
         End If
-        
-        If Not dic.Exists(VLVText) Then
-            dic.Add VLVText, VLVText & ".1"
-            Dim productVLV As Product
-            Set productVLV = products1.AddNewProduct(VLVText)
-        End If
-        
-        '粘贴板的剪切处理
-        Dim selection2
-        Set selection2 = productDocument1.Selection
-        selection2.Clear
-        
-        selection2.Add productCut
-        selection2.Cut
-        
-        '粘贴板的粘贴处理
-        Dim selection3
-        Set selection3 = productDocument1.Selection
-        selection3.Clear
-        
-        Dim productPaste As Product
-        Set productPaste = products1.GetItem(dic(VLVText))
-        
-        selection3.Add productPaste
-        selection3.Paste
+    Else
+        VLVText = "FIX"
     End If
+    
+    If Not dic.Exists(VLVText) Then
+        dic.Add VLVText, VLVText & ".1"
+        Dim productVLV As Product
+        Set productVLV = products1.AddNewProduct(VLVText)
+    End If
+    
+    '粘贴板的剪切处理
+    Dim selection2
+    Set selection2 = productDocument1.Selection
+    selection2.Clear
+    
+    selection2.Add productCut
+    selection2.Cut
+    
+    '粘贴板的粘贴处理
+    Dim selection3
+    Set selection3 = productDocument1.Selection
+    selection3.Clear
+    
+    Dim productPaste As Product
+    Set productPaste = products1.GetItem(dic(VLVText))
+    
+    selection3.Add productPaste
+    selection3.Paste
+
     DoEvents
 Next i
 
-ReorderGraphTree
-AddColor
+Call ReorderGraphTree
+Call AddColor
 
 '保存文档
 'Set productDocument1 = CATIA.ActiveDocument
