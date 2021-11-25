@@ -1,0 +1,132 @@
+Sub CATMain()
+
+    '导出当前节点下单元的为cgr
+    '删除当前节点下隐藏的文件
+    '将所有文件隐藏后遍历
+    '隐藏其他文件导出当前文件
+    
+    On Error Resume Next
+    Dim t1 As Date
+    
+    t1 = Timer
+        
+    '导出文件所在位置
+    Dim Savepath As String
+    Savepath = "E:\work\012_工作日记\备份日记\202111\20211124"
+    
+    
+    '获取当前活动文档
+    Dim productDocument1 As Document
+    Set productDocument1 = CATIA.ActiveDocument
+    
+    '文档下的产品
+    Dim product1 As Product
+    Set product1 = productDocument1.Product
+    
+    '产品下的集合
+    Dim products1 As Products
+    Set products1 = product1.Products
+    
+    
+    '产品集合当前层级数量
+    Dim PdCount As Integer
+    PdCount = products1.Count
+    
+    '选择集，隐藏等属性
+    Dim selection1 As Selection
+    Dim visPropertySet1 As VisPropertySet
+    
+    '''''''''''''''''''
+    '删除隐藏的单元
+    Dim i As Integer
+    Dim productExCgr As Product
+    Dim ShowStatus As CatVisPropertyShow
+     
+    For i = PdCount To 1 Step -1
+    
+        Set productExCgr = products1.Item(i)
+        Set selection1 = productDocument1.Selection
+        
+        '添加单元至选择集
+        selection1.Clear
+        selection1.Add productExCgr
+        
+        '显示要导出的单元
+        Set visPropertySet1 = selection1.VisProperties
+       visPropertySet1.GetShow ShowStatus
+        
+        If ShowStatus = 1 Then
+            selection1.Delete
+        End If
+        
+    Next
+    
+    '''''''''''''''''''
+    
+    Set selection1 = productDocument1.Selection
+    selection1.Clear
+    
+    ''''''''''''''''''''
+    '隐藏当前节点下全部内容
+    PdCount = products1.Count
+    
+    For i = 1 To PdCount
+        Set productExCgr = products1.Item(i)
+        selection1.Add productExCgr
+    Next
+    
+    '隐藏所有
+    Set visPropertySet1 = selection1.VisProperties
+    Set visPropertySet1 = visPropertySet1.Parent
+    visPropertySet1.SetShow 1
+    selection1.Clear
+    
+    ''''''''''''''''''''
+    ''''''''''''''''''''
+    '遍历导出cgr
+    Dim PartNumber1 As String
+    For i = 1 To PdCount
+    
+        Set productExCgr = products1.Item(i)
+        PartNumber1 = products1.Item(i).PartNumber
+        Set selection1 = productDocument1.Selection
+        
+        '添加单元至选择集
+        selection1.Clear
+        selection1.Add productExCgr
+        
+        '显示要导出的单元
+        Set visPropertySet1 = selection1.VisProperties
+        Set visPropertySet1 = visPropertySet1.Parent
+        visPropertySet1.SetShow 0
+        
+        'cgr导出
+        productDocument1.ExportData Savepath & "\" & PartNumber1 & ".cgr", "cgr"
+        
+        '导出后隐藏
+        visPropertySet1.SetShow 1
+        
+    Next
+    
+    ''''''''''''''''''''
+    ''''''''''''''''''''
+    '显示当前节点下全部内容
+    Set selection1 = productDocument1.Selection
+    selection1.Clear
+    
+    For i = 1 To PdCount
+    
+        Set productExCgr = products1.Item(i)
+        selection1.Add productExCgr
+   
+    Next
+    
+    '隐藏
+    Set visPropertySet1 = selection1.VisProperties
+    Set visPropertySet1 = visPropertySet1.Parent
+    visPropertySet1.SetShow 0
+    selection1.Clear
+    
+    MsgBox "程序运行结束，请检查，谢谢！" & vbCrLf & "程序运行时间：" & Format$(Timer - t1, "0.00") & "s"
+
+End Sub
