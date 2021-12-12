@@ -1,0 +1,99 @@
+Option Explicit
+
+Sub CATMain()
+MainForm003.Show
+End Sub
+
+Function CreatePoint(ByVal FilePath As String)
+'创建点
+
+    '时间
+    On Error Resume Next
+    Dim t1 As Date
+    
+    t1 = Timer
+    '''''''''''''''
+    '读取点坐标
+    
+    '取出点集合
+    Dim PointArr As Variant
+    PointArr = GetPointCoorSys(FilePath)
+    
+    '取出点数量
+    Dim RowNum As Integer
+    RowNum = UBound(PointArr, 1)
+    
+    '''''''''''''''
+    
+    Dim documents1 As Documents
+    Set documents1 = CATIA.Documents
+    
+    Dim partDocument1 As PartDocument
+    Set partDocument1 = documents1.Add("Part")
+    
+    '修改part零件名称
+    Dim product1 As Product
+    Set product1 = partDocument1.GetItem("Part1")
+    
+    product1.PartNumber = "Point Collections"
+    
+    Dim part1 As Part
+    Set part1 = partDocument1.Part
+    
+    '建立图形集并重命名
+    Dim hybridBodies1 As HybridBodies
+    Set hybridBodies1 = part1.HybridBodies
+    
+    Dim hybridBody1 As HybridBody
+    Set hybridBody1 = hybridBodies1.Add()
+    
+    hybridBody1.Name = "Point Collections"
+    
+    'part1.Update
+    
+    Dim hybridShapeFactory1 As HybridShapeFactory
+    Set hybridShapeFactory1 = part1.HybridShapeFactory
+    
+    '画点
+    Dim i As Integer
+    For i = 1 To RowNum
+    
+        Dim hybridShapePointCoord1 As HybridShapePointCoord
+        Set hybridShapePointCoord1 = hybridShapeFactory1.AddNewPointCoord(PointArr(i, 2), PointArr(i, 3), PointArr(i, 4))
+    
+        hybridBody1.AppendHybridShape hybridShapePointCoord1
+    
+        hybridShapePointCoord1.Name = PointArr(i, 1)
+    
+    Next
+    
+    part1.Update
+    
+    MsgBox "程序运行结束，请检查，谢谢！" & vbCrLf & "程序运行时间：" & Format$(Timer - t1, "0.00") & "s"
+
+End Function
+
+Function GetPointCoorSys(ByVal FilePath As String) As Variant
+
+'读取Excel表格内的点坐标值，并返回坐标的数组
+
+    '连接Excel
+    Dim AppExcel As Excel.Application
+    Set AppExcel = CreateObject("Excel.Application")
+    
+    Dim Wb As Workbook
+    Set Wb = AppExcel.Workbooks.Open(FilePath)
+    
+    Dim Sht1 As Worksheet
+    Set Sht1 = Wb.Sheets(1)
+    
+    Dim RowNum As Integer
+    RowNum = Sht1.UsedRange.Rows.Count - 1
+    
+    '第一行默认为标题行
+    GetPointCoorSys = Sht1.Range("A2", "D" & (RowNum + 1))
+    
+    Wb.Close
+
+End Function
+
