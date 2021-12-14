@@ -1,0 +1,91 @@
+' Mirror of Parts and Products  according to XZ,YZ,XY plane
+'
+'
+Option Explicit
+
+Sub CATMain()
+
+    Dim symPlane As String
+    symPlane = "xy" 'Default value, (xz,yz,xy)
+
+    Dim InputObjectType(0)
+    InputObjectType(0) = "CATIAProduct"
+    
+    Dim msgboxtext As String
+    msgboxtext = "宏镜像: " & UCase(symPlane)
+    ' ******************************* run *************************************************
+
+    Dim oSel As Object
+    Set oSel = CATIA.ActiveDocument.Selection
+
+    ReDim strArray(0)
+    strArray(0) = "Product"
+    
+    'CATIA交互选择
+    Dim Status As String
+    Status = oSel.SelectElement3(strArray, "Select Product", False, CATMultiSelTriggWhenUserValidatesSelection, False)
+    
+    '按ESC能够退出当前程序
+    If (Status = "Cancel") Then Exit Sub
+
+    Dim rc As String
+    rc = MsgBox("                  REPLACE .............. YES" & vbCrLf & _
+       vbCrLf & "                  DUPLICATE ............ NO", vbYesNoCancel + vbDefaultButton1, msgboxtext)
+    
+    '取消按键能够退出当前程序
+    If (rc = vbCancel) Then Exit Sub
+
+    '不删除原数据，将选择的数据添加入selection
+    If (rc = vbNo) Then
+        oSel.Copy
+        oSel.Clear
+        oSel.Add CATIA.ActiveDocument.Product
+        oSel.Paste
+    End If
+    
+    Dim prod2 As Object
+    Set prod2 = oSel.Item2(1).Value
+    
+    Dim name1 As String
+    name1 = "MacroImage-" & oSel.Item2(1).Value.PartNumber
+    
+    On Error Resume Next
+    
+    prod2.Name = name1
+
+    Dim dDirection As String
+    
+    If (symPlane <> "") Then
+        dDirection = symPlane
+    End If
+    
+    '三维矩阵，对称计算
+    Dim Matrix(11) As Variant
+    
+    If (dDirection = "xz") Then
+    Matrix(0) = 1#
+    Matrix(4) = -1#
+    Matrix(8) = 1#
+    End If
+    If (dDirection = "yz") Then
+    Matrix(0) = -1#
+    Matrix(4) = 1#
+    Matrix(8) = 1#
+    End If
+    If (dDirection = "xy") Then
+    Matrix(0) = 1#
+    Matrix(4) = 1#
+    Matrix(8) = -1#
+    End If
+    Matrix(1) = 0#
+    Matrix(2) = 0#
+    Matrix(3) = 0#
+    Matrix(5) = 0#
+    Matrix(6) = 0#
+    Matrix(7) = 0#
+    Matrix(9) = 0#
+    Matrix(10) = 0#
+    Matrix(11) = 0#
+    
+    prod2.Move.Apply Matrix
+End Sub
