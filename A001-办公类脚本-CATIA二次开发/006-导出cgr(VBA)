@@ -27,6 +27,9 @@ Sub CATMain()
     Dim products1 As Products
     Set products1 = product1.Products
     
+    '右侧设备导出cgr，多了一层Macro Image
+    'Set products1 = product1.Products.item(1).Products
+    
     
     '产品集合当前层级数量
     Dim PdCount As Integer
