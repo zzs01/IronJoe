@@ -5,6 +5,9 @@ Sub CATMain()
     '将所有文件隐藏后遍历
     '隐藏其他文件导出当前文件
     
+    '待添加：
+    '批量导入3dx，生成文件夹，以3dx名称命名
+
     On Error Resume Next
     Dim t1 As Date
     
