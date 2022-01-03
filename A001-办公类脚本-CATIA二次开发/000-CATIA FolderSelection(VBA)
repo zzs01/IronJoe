@@ -1,0 +1,54 @@
+Option Explicit
+
+Function GetFolderDialog() As String
+
+'=================================================================================================
+' TITLE: BrowseForFolderDialogBox
+'
+' PURPOSE: Open Window dialog box to choose directory to process.
+' Return the choosen path to a variable.
+'
+' HOW TO USE: strResult = BrowseForFolderDialogBox()
+' ==================================================
+
+Const WINDOW_HANDLE = 0
+Const NO_OPTIONS = &H10
+Dim objShellApp
+Dim objFolder
+Dim objFldrItem
+Dim objPath
+Dim strTitle
+
+Set objShellApp = CreateObject("Shell.Application")
+Set objFolder = objShellApp.BrowseForFolder(WINDOW_HANDLE, strTitle, NO_OPTIONS)
+
+'获得文件夹的名称
+objPath = ""
+'*****************************'
+''''''''''''''
+'当前文件夹名称
+''''''''''''''
+'Dim BrowseForFolderDialogBox
+'BrowseForFolderDialogBox = objPath
+
+'If objFolder Is Nothing Then
+'
+'    objFolder = ""
+'
+'End If
+
+'*****************************'
+
+If objFolder Is Nothing Then Exit Function
+
+'文件夹绝对路径
+Set objFldrItem = objFolder.Self
+objPath = objFldrItem.path
+
+GetFolderDialog = CStr(objPath)
+
+Set objShellApp = Nothing
+Set objFolder = Nothing
+Set objFldrItem = Nothing
+
+End Function
