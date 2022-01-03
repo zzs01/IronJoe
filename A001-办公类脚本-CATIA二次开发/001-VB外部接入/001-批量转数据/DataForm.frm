@@ -252,7 +252,7 @@ Function FolderBroswer() As String
 ' ==================================================
 
 Const WINDOW_HANDLE = 0
-Const NO_OPTIONS = &H1
+Const NO_OPTIONS = &H10
 Dim objShellApp
 Dim objFolder
 Dim objFldrItem
