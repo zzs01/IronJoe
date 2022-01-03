@@ -1,0 +1,154 @@
+Option Explicit
+
+'1.批量导入，生成以文件夹名称命名的产品
+'2.文件夹要只留下需要处理的文件夹
+'3.统一视图
+
+'全局静态变量，文件后缀
+Public Const fileSuffix = ".cgr"
+
+Sub CATMain()
+
+On Error Resume Next
+Dim t1 As Date
+t1 = Timer
+
+Dim FilePath As String
+FilePath = General.GetFolderDialog
+ 
+If FilePath = "" Then Exit Sub
+
+Dim fs As Object
+Dim fp As Object
+Dim f1 'As Object
+Dim fc As Object
+Dim fp1 As Object
+
+Set fs = CATIA.FileSystem  'CATIA文档系统
+Set fp = fs.GetFolder(FilePath) '获取输入路径位置
+
+'文件夹下的文件集合
+Set fp1 = fp.SubFolders
+
+For Each f1 In fp1
+
+    '取出每个文件夹下的cgr文件
+    Set fc = f1.Files
+    
+    Dim SingleFileList As Variant
+    SingleFileList = GetCgrFile(fc)
+    
+    Call CreateProduct(FilePath, f1.Name, SingleFileList)
+    
+Next
+
+MsgBox "程序运行结束，请检查，谢谢！" & vbCrLf & "程序运行时间：" & Format$(Timer - t1, "0.00") & "s"
+
+
+End Sub
+
+Function GetCgrFile(ByVal FileVar) As Variant  'ByVal FileVar As Files
+
+'
+'文件筛选处理，文件夹后缀取出
+'
+
+Dim file As Object
+Dim fileName As String
+Dim GetFileList() As Variant
+
+Dim i As Integer
+
+'遍历集合内的文件
+For Each file In FileVar
+    
+    fileName = file.Name
+    If InStr(LCase(fileName), fileSuffix) <> 0 Then
+        
+        i = i + 1
+        
+        ReDim Preserve GetFileList(1 To i)
+        
+        GetFileList(i) = fileName
+
+    End If
+Next
+
+GetCgrFile = GetFileList
+
+End Function
+
+Function CreateProduct(ByVal folderPath As String, ByVal folderName As String, ByVal SingleFileList As Variant)
+'生成CATIA产品
+'folderPath:当前文件 上一层 文件夹
+'folderName: 当前文件所在文件夹名称
+    Dim documents1 As Documents
+    Set documents1 = CATIA.Documents
+    
+    Dim productDocument1 As ProductDocument
+    Set productDocument1 = documents1.Add("Product")
+    
+    Dim product1 As Product
+    Set product1 = productDocument1.Product
+    
+    Dim products1 As Products
+    Set products1 = product1.Products
+    
+    Dim arrayOfVariantOfBSTR1() As Variant
+    
+    Dim i As Integer
+    Dim Llength As Integer
+    Dim Ulength As Integer
+    
+    Llength = LBound(SingleFileList)
+    Ulength = UBound(SingleFileList)
+    
+    For i = Llength To Ulength
+        ReDim Preserve arrayOfVariantOfBSTR1(i)
+        arrayOfVariantOfBSTR1(i - 1) = folderPath & "\" & folderName & "\" & SingleFileList(i)
+        
+    Next
+    
+    Dim products1Variant 'As Products
+    Set products1Variant = products1
+    
+    products1Variant.AddComponentsFromFiles arrayOfVariantOfBSTR1, "All"
+    
+    product1.PartNumber = folderName
+    
+    '''''''''''''''''''
+    '文档居中显示
+    '''''''''''''''''''
+    Dim specsAndGeomWindow1 As SpecsAndGeomWindow
+    Set specsAndGeomWindow1 = CATIA.ActiveWindow
+    
+    Dim viewer3D1 As Viewer3D
+    Set viewer3D1 = specsAndGeomWindow1.ActiveViewer
+    
+    Dim SightDir(2), UpDir(2) '定义视线方向和上方向坐标分量
+    
+    SightDir(0) = 1.414
+    SightDir(1) = 1.414
+    SightDir(2) = 0
+    
+    UpDir(0) = 1.414
+    UpDir(1) = 0
+    UpDir(2) = 0
+    
+    Dim viewpoint3D1 'As Viewpoint3D
+    Set viewpoint3D1 = viewer3D1.Viewpoint3D
+    
+    viewpoint3D1.PutSightDirection SightDir  '从视点看向原点
+    viewpoint3D1.PutUpDirection UpDir '定义上方方向分量
+    
+    viewer3D1.Reframe
+    
+    viewer3D1.Update
+
+    ''''''''''''''''''''''''''''''
+    
+    productDocument1.SaveAs folderPath & "\" & folderName & "\" & folderName & ".CATProduct"
+    
+    productDocument1.Close
+
+End Function
