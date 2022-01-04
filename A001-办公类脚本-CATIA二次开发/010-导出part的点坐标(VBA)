@@ -90,9 +90,9 @@ Sub CATmain()
     Next
     '文件另存为，自动覆盖文件
     
-    Application.DisplayAlerts = False
+    AppExcel.DisplayAlerts = False
     Wb.SaveAs fileFullPath, ConflictResolution:=2
-    Application.DisplayAlerts = True
+    AppExcel.DisplayAlerts = True
     
     Wb.Close
     
