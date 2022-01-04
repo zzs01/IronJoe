@@ -151,10 +151,12 @@ Function CreateProduct(ByVal folderPath As String, ByVal folderName As String, B
     '*****************************************'
     '                覆盖保存                 '
     '*****************************************'
-    'CATIA.DisplayAlerts = False '没有产生效果
+    CATIA.DisplayFileAlerts = False
+    
     productDocument1.SaveAs folderPath & "\" & folderName & "\" & folderName & ".CATProduct"
-    'CATIA.DisplayAlerts = True
     
     productDocument1.Close
+    
+    CATIA.DisplayFileAlerts = True
 
 End Function
