@@ -1,0 +1,101 @@
+Option Explicit
+
+'需要在几何图形集内
+'
+'
+
+
+Sub CATmain()
+
+    On Error Resume Next
+    Dim t1 As Date
+    
+    t1 = Timer
+
+    Dim PartDoc As PartDocument
+    Set PartDoc = CATIA.ActiveDocument
+    
+    Dim part1 As Part
+    Set part1 = PartDoc.Part
+    
+    '几何图形集
+    Dim hybridBodies1 As HybridBodies
+    Set hybridBodies1 = part1.HybridBodies
+    
+    Dim HybridBody1 As HybridBody
+    Set HybridBody1 = hybridBodies1.GetItem("Point Collections")
+    
+    Dim HybridShape1 As HybridShape
+    Dim selection1 As Selection
+    Set selection1 = PartDoc.Selection
+    
+    Dim point As Object '不能用具体的类型名称，被限制了使用
+    Dim Coords(2) As Variant
+    
+    '*****************************************'
+    '                Excel连接                '
+    '*****************************************'
+    
+    Dim AppExcel As Excel.Application
+    Set AppExcel = CreateObject("Excel.Application")
+    
+    Dim Wb As Workbook
+    Set Wb = AppExcel.Workbooks.Add
+    
+    Dim fileFolder As String
+    fileFolder = General.GetFolderPath
+    
+    Dim fileFullPath As String
+    fileFullPath = fileFolder & "\" & "导出点坐标_" & Format(DateTime.Date, "yyyy-mm-dd") & "V1.xlsx"
+    
+    Debug.Print fileFullPath
+    
+    Dim Sht1 As Worksheet
+    Set Sht1 = Wb.Sheets.Add
+    
+    Sht1.Name = "导出坐标值"
+    
+    '*****************************************'
+    '                表头写入                 '
+    '*****************************************'
+    With Sht1
+        .Cells(1, 1) = "点号"
+        .Cells(1, 2) = "X坐标"
+        .Cells(1, 3) = "Y坐标"
+        .Cells(1, 4) = "Z坐标"
+    End With
+    
+    Dim i As Integer
+    i = 1
+    
+    For Each HybridShape1 In HybridBody1.HybridShapes
+        
+        If TypeName(HybridShape1) = "HybridShapePointTangent" Then
+            i = i + 1
+            selection1.Clear
+            selection1.Add HybridShape1
+            Set point = selection1.item(1).Value
+            point.GetCoordinates Coords
+            
+            '写入Excel，实时导出写入
+            With Sht1
+                .Cells(i, 1) = HybridShape1.Name
+                .Cells(i, 2) = Coords(0)
+                .Cells(i, 3) = Coords(1)
+                .Cells(i, 4) = Coords(2)
+            End With
+            
+        End If
+
+    Next
+    '文件另存为，自动覆盖文件
+    
+    Application.DisplayAlerts = False
+    Wb.SaveAs fileFullPath, ConflictResolution:=2
+    Application.DisplayAlerts = True
+    
+    Wb.Close
+    
+    MsgBox "程序运行结束，请检查，谢谢！" & vbCrLf & "程序运行时间：" & Format$(Timer - t1, "0.00") & "s"
+
+End Sub
