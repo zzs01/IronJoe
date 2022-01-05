@@ -1,6 +1,5 @@
 Option Explicit
 
-'仅支持3dx文件
 '增加隐藏目录树的焊枪以及参考，工件 功能
 '增加多个视图截图调整
 '增加背景颜色调节
@@ -8,7 +7,9 @@ Option Explicit
 
 
 '保存后缀
-Public Const suffix = ".png"
+'png 4
+Public Const suffix = ".bmp"
+Public Const imgFormatMode = 4
 
 Sub CATMain()
     MainForm006.Show
@@ -223,7 +224,7 @@ Function SetViewPoint(ByVal viewer3D1, ByVal strName As String)
         Dim fileName As String
         
         fileName = strName & "-" & i & suffix
-        viewer3D1.CaptureToFile 4, fileName
+        viewer3D1.CaptureToFile imgFormatMode, fileName
     Next
     
 End Function
