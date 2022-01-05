@@ -1,5 +1,7 @@
 Option Explicit
 
+
+'抗锯齿开到0.1，超级采样开到最大
 '增加隐藏目录树的焊枪以及参考，工件 功能
 '增加多个视图截图调整
 '增加背景颜色调节
@@ -8,7 +10,7 @@ Option Explicit
 
 '保存后缀
 'png 4
-Public Const suffix = ".bmp"
+Public Const suffix = ".png"
 Public Const imgFormatMode = 4
 
 Sub CATMain()
@@ -108,6 +110,9 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     '======================================================'
     '**********************截图多种角度********************'
     '======================================================'
+    
+    Dim objCamera As Camera3D
+    Set objCamera = CATIA.ActiveDocument.Cameras.item(1)
     
     Call SetViewPoint(viewer3D1, strName)
     
