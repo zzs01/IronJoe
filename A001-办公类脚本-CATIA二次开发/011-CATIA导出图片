@@ -1,0 +1,163 @@
+Option Explicit
+
+'增加隐藏目录树的焊枪以及参考，工件 功能
+'增加多个视图截图调整
+'增加背景调节
+
+Sub CATMain()
+    MainForm006.Show
+End Sub
+
+Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
+
+'folderPath 图片保存位置
+'filePath 文件打开位置
+    
+    '保存后缀
+    Dim suffix As String
+    suffix = ".png"
+    
+    Dim documents1 As Documents
+    Set documents1 = CATIA.Documents
+    
+    Dim Document1 As Document
+    Set Document1 = documents1.Open(filePath)
+    
+    Dim productDocument1 As ProductDocument
+    Set productDocument1 = CATIA.ActiveDocument
+    
+    Dim product1 As Product
+    Set product1 = productDocument1.Product
+    
+    '保存名称
+    Dim partname As String
+    partname = product1.PartNumber
+    
+    '完整名称
+    Dim strName As String
+    strName = folderPath & "\" & partname & suffix
+    
+    '======================================================'
+    '**********************设置文档线宽********************'
+    '======================================================'
+    
+    Dim selection1 As Selection
+    Set selection1 = productDocument1.Selection
+    
+    selection1.Clear
+    selection1.Add product1
+    
+    Dim Obj As VisPropertySet
+    Set Obj = selection1.VisProperties
+    
+'    '获取初始线宽
+'    Dim width As Long
+'    Obj.GetRealWidth width
+    
+    '设置线宽
+    Obj.SetRealWidth 55#, 1
+    selection1.Clear
+    
+    '======================================================'
+    '**********************文档居中显示********************'
+    '======================================================'
+    Dim specsAndGeomWindow1 As SpecsAndGeomWindow
+    Set specsAndGeomWindow1 = CATIA.ActiveWindow
+    
+    Dim viewer3D1 'As Viewer3D
+    Set viewer3D1 = specsAndGeomWindow1.ActiveViewer
+    
+    Dim SightDir(2), UpDir(2) '定义视线方向和上方向坐标分量
+
+'    '轴测视图
+'    SightDir(0) = 1.414
+'    SightDir(1) = 1.414
+'    SightDir(2) = 0
+'
+'    UpDir(0) = 1.414
+'    UpDir(1) = 0
+'    UpDir(2) = 0
+
+    SightDir(0) = -0.5
+    SightDir(1) = -0.7
+    SightDir(2) = 0.5
+    
+    UpDir(0) = -0.5
+    UpDir(1) = 0.7
+    UpDir(2) = 0.5
+    
+    Dim viewpoint3D1 'As Viewpoint3D
+    Set viewpoint3D1 = viewer3D1.Viewpoint3D
+    
+    viewpoint3D1.PutSightDirection SightDir  '从视点看向原点
+    viewpoint3D1.PutUpDirection UpDir '定义上方方向分量
+    
+    '居中
+    viewer3D1.Reframe
+    viewer3D1.ZoomIn
+    
+    '相机对象
+    Dim objCamera3D As Camera3D
+    Set objCamera3D = CATIA.ActiveDocument.Cameras.item(1)
+    
+    '隐藏结构树
+    specsAndGeomWindow1.Layout = catWindowGeomOnly
+    
+    '刷新背景
+    viewer3D1.Update
+       
+    '======================================================'
+    '*************设置背景渐变样式以及背景颜色*************'
+    '======================================================'
+    Dim settingControllers1 As SettingControllers
+    Set settingControllers1 = CATIA.SettingControllers
+    
+    Dim visualizationSettingAtt1 'As VisualizationSettingAtt
+    Set visualizationSettingAtt1 = settingControllers1.item("CATVizVisualizationSettingCtrl")
+    
+    '获得初始的背景颜色，用于后面恢复
+    Dim DBLBackArray(2)
+    visualizationSettingAtt1.GetBackgroundRGB DBLBackArray(0), DBLBackArray(1), DBLBackArray(2)
+    
+    '设置背景颜色为黑色
+    Dim dblColorArray(2)
+    dblColorArray(0) = 0
+    dblColorArray(1) = 0
+    dblColorArray(2) = 0
+    visualizationSettingAtt1.SetBackgroundRGB dblColorArray(0), dblColorArray(1), dblColorArray(2)
+    
+    Dim showFlag As Boolean
+    showFlag = visualizationSettingAtt1.ColorBackgroundMode
+    
+    'True为渐变，False为不渐变
+    If showFlag Then
+        visualizationSettingAtt1.ColorBackgroundMode = False
+    End If
+    
+    visualizationSettingAtt1.SaveRepository
+    
+    '''''截图程序本体，最后复原'''''
+    viewer3D1.CaptureToFile 4, strName
+    
+    '======================================================'
+    '*************恢复背景渐变样式以及背景颜色*************'
+    '======================================================'
+        
+    If showFlag Then
+        visualizationSettingAtt1.ColorBackgroundMode = True
+    End If
+    
+    visualizationSettingAtt1.SetBackgroundRGB DBLBackArray(0), DBLBackArray(1), DBLBackArray(2)
+    
+    visualizationSettingAtt1.SaveRepository
+    
+    '恢复结构树
+    specsAndGeomWindow1.Layout = catWindowSpecsAndGeom
+    
+    '刷新背景
+    viewer3D1.Update
+    
+    productDocument1.Close
+    
+End Function
+
