@@ -19,6 +19,16 @@ Public Const screenShotHeight = 800
 Public Const screenShotWidth = 800
 
 Sub CATMain()
+    '要放在这里执行，才会修改大小
+    '设置截图尺寸大小
+    Dim screenShotHeight As Long
+    Dim screenShotWidth As Long
+    
+    screenShotHeight = 900
+    screenShotWidth = 900
+    
+    Call ExportImage.SetScreenSize(screenShotHeight, screenShotWidth)
+
     MainForm006.Show
 End Sub
 
