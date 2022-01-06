@@ -6,16 +6,6 @@ End Sub
 
 Private Sub BTNConfirm_Click()
 
-    '设置截图尺寸大小
-    Dim screenShotHeight As Long
-    Dim screenShotWidth As Long
-    
-    screenShotHeight = 900
-    screenShotWidth = 900
-    
-    Call ExportImage.SetScreenSize(screenShotHeight, screenShotWidth)
-        
-        
     '设置背景颜色
     Dim dblColorArray(2)
     dblColorArray(0) = ScrollBarRed.Value
@@ -223,6 +213,14 @@ If Val(Format(Now, "yyyyMMddHHmmss")) > 20220630000000# Then
     MsgBox "程序已过期，请联系管理员"
     End
 
-    
 End If
+
+    '设置截图尺寸大小
+    Dim screenShotHeight As Long
+    Dim screenShotWidth As Long
+    
+    screenShotHeight = 900
+    screenShotWidth = 900
+    
+    Call ExportImage.SetScreenSize(screenShotHeight, screenShotWidth)
 End Sub
