@@ -1,0 +1,11 @@
+Private Sub UserForm_Initialize()
+
+'程序过期限制
+If Val(Format(Now, "yyyyMMddHHmmss")) > 20220630000000# Then
+
+    MsgBox "程序已过期，请联系管理员"
+    End
+
+    
+End If
+End Sub
