@@ -12,6 +12,8 @@ Option Explicit
 'png 4
 Public Const suffix = ".png"
 Public Const imgFormatMode = 4
+Public Const screenShotHeight = 900
+Public Const screenShotWidth = 900
 
 Sub CATMain()
     MainForm006.Show
@@ -111,10 +113,67 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     '**********************截图多种角度********************'
     '======================================================'
     
+    Dim height As Long
+    
+    '***************判断中英文**************
+    Dim flag
+    flag = 0
+    
+    On Error Resume Next
+    Dim a
+    a = "中"
+    a = Left(CATIA.StatusBar, 1)
+    'a = CATIA.StatusBar
+    
+    If a > "~" Then   '中文
+    
+        flag = 1
+    
+    ElseIf Asc(a) > 47 And Asc(a) < 123 Then    '英文
+    
+        flag = 2
+    
+    Else
+    
+        MsgBox "非中英文环境"
+        Exit Function
+    
+    End If
+    On Error GoTo 0
+    '***************************************
+    '隐藏指南针
+    
+    If flag = 1 Then
+        CATIA.StartCommand ("指南针")
+    ElseIf flag = 2 Then
+        CATIA.StartCommand ("Compass")
+    End If
+    
+    '======================================================'
+    '*******************设置截图窗口大小*******************'
+    '======================================================'
+    Dim sH As Long
+    Dim sW As Long
+    
+    sH = specsAndGeomWindow1.height
+    sW = specsAndGeomWindow1.width
+    
+    CATIA.height = CATIA.height - (sH - screenShotHeight)
+    CATIA.width = CATIA.width - (sW - screenShotWidth)
+    
+    '======================================================'
+    
     Dim objCamera As Camera3D
     Set objCamera = CATIA.ActiveDocument.Cameras.item(1)
     
     Call SetViewPoint(viewer3D1, strName)
+    
+    '显示指南针
+    If flag = 1 Then
+        CATIA.StartCommand ("指南针")
+    ElseIf flag = 2 Then
+        CATIA.StartCommand ("Compass")
+    End If
     
     '======================================================'
     '*************恢复背景渐变样式以及背景颜色*************'
