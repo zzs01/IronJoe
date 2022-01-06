@@ -215,12 +215,4 @@ If Val(Format(Now, "yyyyMMddHHmmss")) > 20220630000000# Then
 
 End If
 
-    '设置截图尺寸大小
-    Dim screenShotHeight As Long
-    Dim screenShotWidth As Long
-    
-    screenShotHeight = 900
-    screenShotWidth = 900
-    
-    Call ExportImage.SetScreenSize(screenShotHeight, screenShotWidth)
 End Sub
