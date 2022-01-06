@@ -165,7 +165,7 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     sW = specsAndGeomWindow1.width
     
     CATIA.height = CATIA.height - (sH - screenShotHeight)
-    CATIA.width = CATIA.width - (sW - screenShotWidth)
+    CATIA.width = CATIA.width - (sW - screenShotWidth + 40)'补偿截图尺寸
     
     '======================================================'
     
@@ -198,8 +198,8 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     specsAndGeomWindow1.Layout = catWindowSpecsAndGeom
     
     '恢复窗口大小
-    CATIA.height = cH
-    CATIA.width = cW
+    'CATIA.height = cH
+    'CATIA.width = cW
     
     '刷新背景
     viewer3D1.Update
