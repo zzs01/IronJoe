@@ -15,8 +15,6 @@ Option Explicit
 'png 4
 Public Const suffix = ".png"
 Public Const imgFormatMode = 4
-Public Const screenShotHeight = 800
-Public Const screenShotWidth = 800
 
 Sub CATMain()
     '要放在这里执行，才会修改大小
