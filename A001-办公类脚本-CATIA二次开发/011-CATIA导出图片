@@ -152,6 +152,11 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     '======================================================'
     '*******************设置截图窗口大小*******************'
     '======================================================'
+    Dim cW As Long
+    Dim cH As Long
+    cH = CATIA.height
+    cW = CATIA.width
+    
     Dim sH As Long
     Dim sW As Long
     
@@ -166,6 +171,7 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     Dim objCamera As Camera3D
     Set objCamera = CATIA.ActiveDocument.Cameras.item(1)
     
+    '截图本体
     Call SetViewPoint(viewer3D1, strName)
     
     '显示指南针
@@ -189,6 +195,10 @@ Function ExportImage(ByVal folderPath As String, ByVal filePath As String)
     
     '恢复结构树
     specsAndGeomWindow1.Layout = catWindowSpecsAndGeom
+    
+    '恢复窗口大小
+    CATIA.height = cH
+    CATIA.width = cW
     
     '刷新背景
     viewer3D1.Update
@@ -279,7 +289,7 @@ Function SetViewPoint(ByVal viewer3D1, ByVal strName As String)
         '自适应居中
         viewer3D1.Reframe
         '放大
-        viewer3D1.ZoomIn
+        'viewer3D1.ZoomIn
         
         '刷新背景
         viewer3D1.Update
