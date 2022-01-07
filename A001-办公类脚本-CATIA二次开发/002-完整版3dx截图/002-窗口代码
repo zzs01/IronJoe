@@ -5,6 +5,14 @@ Private Sub BTNCancel_Click()
 End Sub
 
 Private Sub BTNConfirm_Click()
+    '设置截图尺寸大小
+    Dim screenShotHeight As Long
+    Dim screenShotWidth As Long
+    
+    screenShotHeight = 900
+    screenShotWidth = 900
+    
+    Call ExportImage.SetScreenSize(screenShotHeight, screenShotWidth)
 
     '设置背景颜色
     Dim dblColorArray(2)
