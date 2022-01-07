@@ -326,4 +326,9 @@ Function SetScreenSize(ByVal screenShotHeight As Long, ByVal screenShotWidth As 
     
     productDocument1.Close
 
+    '尺寸修正    
+    If specsAndGeomWindow1.height <> screenShotHeight And specsAndGeomWindow1.height <> screenShotWidth Then
+        Call SetScreenSize(screenShotHeight, screenShotWidth)
+    End If
+
 End Function
