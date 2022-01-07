@@ -319,17 +319,14 @@ Function SetScreenSize(ByVal screenShotHeight As Long, ByVal screenShotWidth As 
     
     CATIA.height = CATIA.height - (sH - screenShotHeight)
     CATIA.width = CATIA.width - (sW - screenShotWidth + 40) '补偿截图
+
+    specsAndGeomWindow1.Close
     
-    Debug.Print sH
-    Debug.Print sW
+    productDocument1.Close
 
     '尺寸修正    
     If specsAndGeomWindow1.height <> screenShotHeight And specsAndGeomWindow1.height <> screenShotWidth Then
         Call SetScreenSize(screenShotHeight, screenShotWidth)
     End If
-
-    specsAndGeomWindow1.Close
-    
-    productDocument1.Close
 
 End Function
