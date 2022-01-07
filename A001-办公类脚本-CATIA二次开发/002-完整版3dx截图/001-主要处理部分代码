@@ -295,6 +295,7 @@ Function SetScreenSize(ByVal screenShotHeight As Long, ByVal screenShotWidth As 
     '*******************设置截图窗口大小*******************'
     '======================================================'
     '新建一个Product进行设置
+    '后面跟进生成的图片尺寸进行调整
     
     'catia 刷新窗口显示才能捕捉到窗口大小
     CATIA.RefreshDisplay = True
