@@ -291,17 +291,21 @@ Function SetViewPoint(ByVal viewer3D1, ByVal strName As String)
     
 End Function
 Function SetScreenSize(ByVal screenShotHeight As Long, ByVal screenShotWidth As Long)
-
     '======================================================'
     '*******************设置截图窗口大小*******************'
     '======================================================'
     '新建一个Product进行设置
+    
+    'catia 刷新窗口显示才能捕捉到窗口大小
+    CATIA.RefreshDisplay = True
     
     Dim documents1 As Documents
     Set documents1 = CATIA.Documents
     
     Dim productDocument1 As ProductDocument
     Set productDocument1 = documents1.Add("Product")
+    
+    Set productDocument1 = CATIA.ActiveDocument
     
     Dim specsAndGeomWindow1 As SpecsAndGeomWindow
     Set specsAndGeomWindow1 = CATIA.ActiveWindow
@@ -314,6 +318,11 @@ Function SetScreenSize(ByVal screenShotHeight As Long, ByVal screenShotWidth As 
     
     CATIA.height = CATIA.height - (sH - screenShotHeight)
     CATIA.width = CATIA.width - (sW - screenShotWidth + 40) '补偿截图
+    
+    Debug.Print sH
+    Debug.Print sW
+    
+    specsAndGeomWindow1.Close
     
     productDocument1.Close
 
