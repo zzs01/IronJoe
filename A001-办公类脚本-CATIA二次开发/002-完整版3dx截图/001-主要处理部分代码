@@ -13,8 +13,8 @@ Option Explicit
 
 '保存后缀
 'png 4
-Public Const suffix = ".png"
-Public Const imgFormatMode = 4
+Public Const suffix = ".JPEG"
+Public Const imgFormatMode = 5
 
 Sub CATMain()
     '要放在这里执行，才会修改大小
