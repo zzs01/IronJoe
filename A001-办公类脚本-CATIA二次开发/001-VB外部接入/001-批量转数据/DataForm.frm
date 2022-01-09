@@ -398,7 +398,7 @@ dateTime = VBA.Date
 Debug.Print dateTime
 timeDifference = dealine - dateTime
 If dateTime < dealine Then
-    If 0 < timeDifference < 4 Then
+    If timeDifference < 4 Then
         MsgBox "程序还有 " & timeDifference & " 天过期！"
     End If
 ElseIf dateTime = dealine Then
