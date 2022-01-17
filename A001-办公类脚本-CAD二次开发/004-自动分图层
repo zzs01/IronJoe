@@ -1,0 +1,536 @@
+Option Explicit
+Public Sub Main()
+
+    SAVE_AS_Main_NIL                                    'COPY全部原图元素到一明珞标准空白模板中
+    Main_AUTOLAYER
+    
+    MsgBox "图层分拣完毕！"
+    
+    End
+
+End Sub
+
+Function Main_AUTOLAYER()
+
+    Dim Value As Variant
+    Value = ThisDrawing.GetVariable("cmdecho")           'scmde  是否回显提示和输入  0.关闭回显 1.打开回显
+
+
+    ThisDrawing.SetVariable "cmdecho", 0
+    Dim ObjLayer As AcadLayer
+
+    Dim Default_LineScale As Single
+    Default_LineScale = 0.5                              '设定缺省线性比例值
+
+    Dim msg1, rr0, rr1, rr2 As String
+    Dim ObjSelectionSet As AcadSelectionSet
+    
+    Dim Count As Integer
+    Count = ThisDrawing.SelectionSets.Count
+    
+    '删除原有选择集
+    While (Count > 0)
+        Set ObjSelectionSet = ThisDrawing.SelectionSets.Item(Count - 1)
+        ObjSelectionSet.Delete
+        Count = Count - 1
+    Wend
+
+    Set ObjSelectionSet = ThisDrawing.SelectionSets.Add("SSET")
+    Dim gpCode() As Integer
+    Dim dataValue() As Variant
+
+    ReDim gpCode(0)
+    ReDim dataValue(0)
+    
+    Dim mode
+    mode = acSelectionSetAll
+    
+    '=============================================
+    '*************尺寸标注移入标注线层************
+    '=============================================
+    gpCode(0) = 0                         '0表示搜索对象类型
+    dataValue(0) = "Dimension"            '对象类型为尺寸类型
+
+    Dim groupCode As Variant, dataCode As Variant
+    groupCode = gpCode
+    dataCode = dataValue
+
+    Dim Entry As AcadEntity
+    For Each Entry In ObjSelectionSet
+        Entry.Layer = "标注线"
+        Entry.Linetype = "ByLayer"                                          '按对应图层设定线型
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer                                    'acLnWtByLwDefault
+        'Entry.Update
+    Next Entry
+
+    ObjSelectionSet.Clear
+    
+    '=============================================
+    '***************文本移入标注线层**************
+    '=============================================
+    gpCode(0) = 0                            '0表示搜索对象类型
+    dataValue(0) = "Text"                    '对象类型为文本类型
+
+    groupCode = gpCode
+    dataCode = dataValue
+
+    ObjSelectionSet.Select mode, , , groupCode, dataCode                '全元素过滤选择
+
+    For Each Entry In ObjSelectionSet
+        Entry.Layer = "标注线"
+        Entry.Linetype = "ByLayer"                                      '按对应图层设定线型
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer
+      '  Entry.Update
+    Next Entry
+
+    ObjSelectionSet.Clear
+
+    '=============================================
+    '*************中心线移入细点划线层************
+    '=============================================
+
+    ReDim gpCode(0 To 4)
+    ReDim dataValue(0 To 4)
+
+    gpCode(0) = -4
+    dataValue(0) = "<or"
+    gpCode(1) = 0
+    dataValue(1) = "Circle"
+    gpCode(2) = 0
+    dataValue(2) = "Arc"
+    gpCode(3) = 0
+    dataValue(3) = "Line"
+    gpCode(4) = -4
+    dataValue(4) = "or>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+        If Entry.Linetype = "DASHDOT" Then
+            Entry.Layer = "细点划线"
+            Entry.Color = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.Linetype = "ByLayer"                                    '按对应图层设定线型
+            Entry.LinetypeScale = Default_LineScale
+            ' Entry.Update
+        End If
+
+    Next Entry
+    
+    ObjSelectionSet.Clear
+
+    '=============================================
+    '***************百格线移入青色线**************
+    '=============================================
+
+    ReDim gpCode(0 To 4)                    '无法与实线边区分
+    ReDim dataValue(0 To 4)
+    gpCode(0) = -4
+    dataValue(0) = "<and"
+    gpCode(1) = 0
+    dataValue(1) = "Line"
+    gpCode(2) = 8
+    dataValue(2) = "0"
+    gpCode(3) = 62
+    dataValue(3) = 112
+    'gpCode(4) = 6
+    'dataValue(4) = "BYLAYER"
+    gpCode(4) = -4
+    dataValue(4) = "and>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+
+        Entry.Layer = "细实线"
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer
+        Entry.Linetype = "ByLayer"
+
+    Next Entry
+
+    ObjSelectionSet.Clear
+
+    
+    ReDim gpCode(0 To 5)                    '无法与实线边区分
+    ReDim dataValue(0 To 5)
+    gpCode(0) = -4
+    dataValue(0) = "<and"
+    gpCode(1) = 0
+    dataValue(1) = "Line"
+    gpCode(2) = 8
+    dataValue(2) = "0"
+    gpCode(3) = 62
+    dataValue(3) = 7
+    gpCode(4) = 6
+    dataValue(4) = "BYLAYER"
+    gpCode(5) = -4
+    dataValue(5) = "and>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+        If Entry.Lineweight = acLnWt013 Then
+            Entry.Layer = "细实线"
+            Entry.Color = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.Linetype = "ByLayer"
+        End If
+    Next Entry
+    ObjSelectionSet.Clear
+
+    '=============================================
+    '**************剖面线移入剖面线层*************
+    '=============================================
+
+
+    ReDim gpCode(0)
+    ReDim dataValue(0)
+    gpCode(0) = 0
+    dataValue(0) = "Line"
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+       If Entry.Color = 150 Then
+        Entry.Layer = "剖面线"
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer
+        Entry.Linetype = "ByLayer"            '按对应图层设定线型
+        End If
+    Next Entry
+    
+    ObjSelectionSet.Clear
+
+    '=============================================
+    '*****多段线(蓝色)且为0层的，移入标注层 ******
+    '=============================================
+
+    ReDim gpCode(0 To 1)
+    ReDim dataValue(0 To 1)
+
+    gpCode(0) = 0
+    dataValue(0) = "LWPolyline"
+
+    gpCode(1) = 8               '8表示图层
+    dataValue(1) = "0"          '图层是"0"层
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+        Entry.Layer = "标注线"
+        Entry.Linetype = "ByLayer"            '按对应图层设定线型
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer
+        'Entry.Update
+    Next Entry
+
+    ObjSelectionSet.Clear
+
+    '=============================================
+    '***************隐藏线移入虚线层**************
+    '=============================================
+    ReDim gpCode(0 To 6)
+    ReDim dataValue(0 To 6)
+
+    gpCode(0) = -4
+    dataValue(0) = "<or"
+
+    gpCode(1) = 0
+    dataValue(1) = "Line"
+
+    gpCode(2) = 0
+    dataValue(2) = "Circle"
+
+    gpCode(3) = 0
+    dataValue(3) = "Arc"
+
+    gpCode(4) = 0
+    dataValue(4) = "Ellipse"
+
+    gpCode(5) = 0
+    dataValue(5) = "Spline"
+
+    gpCode(6) = -4
+    dataValue(6) = "or>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+        If Entry.Linetype = "DASHED" Then
+            Entry.Layer = "虚线"
+            Entry.Color = acByLayer
+            Entry.Linetype = "ByLayer"            '按对应图层设定线型
+            Entry.Lineweight = acLnWtByLayer
+            Entry.LinetypeScale = Default_LineScale
+        
+        ElseIf Entry.Linetype = "DASHSPACE" Then               'DASHSPACE对应元素是？忘了
+            Entry.Layer = "虚线"
+            Entry.Color = acByLayer
+            Entry.Linetype = "ByLayer"            '按对应图层设定线型
+            'Entry.Linetype = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.LinetypeScale = Default_LineScale
+       End If
+    Next
+
+    ObjSelectionSet.Clear
+    
+    '============================================================
+    '螺纹线，移入细实线层
+    '============================================================
+    ReDim gpCode(0 To 1)
+    ReDim dataValue(0 To 1)
+    gpCode(0) = 0
+    dataValue(0) = "Arc"
+
+    '线宽0.13mm
+    gpCode(1) = 370
+    dataValue(1) = "13"
+
+    groupCode = gpCode
+    dataCode = dataValue
+
+    ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+    For Each Entry In ObjSelectionSet
+        Entry.Layer = "细实线"
+        Entry.Color = acByLayer
+        Entry.Linetype = "ByLayer"            '按对应图层设定线型
+        Entry.Lineweight = acLnWtByLayer
+        Entry.LinetypeScale = Default_LineScale
+    Next
+
+    ObjSelectionSet.Clear
+
+    
+    
+    '============================================================
+    ''颜色132或94,圆弧是从CATIA转入的实线型的螺纹线，移入细实线层
+    '============================================================
+    
+    ReDim gpCode(0 To 4)
+    ReDim dataValue(0 To 4)
+
+    gpCode(0) = -4
+    gpCode(1) = 0
+    gpCode(2) = 0
+    gpCode(3) = 0
+    gpCode(4) = -4
+    dataValue(0) = "<or"
+    dataValue(1) = "Line"
+    dataValue(2) = "Circle"
+    dataValue(3) = "Arc"
+    dataValue(4) = "or>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode
+
+    For Each Entry In ObjSelectionSet
+        If Entry.Color = 132 Then
+            Entry.Layer = "细实线"
+            Entry.Color = acByLayer
+            Entry.Linetype = "ByLayer"            '按对应图层设定线型
+            Entry.Lineweight = acLnWtByLayer
+            Entry.LinetypeScale = Default_LineScale
+        ElseIf Entry.Color = 94 Then
+            Entry.Layer = "细实线"
+            Entry.Color = acByLayer
+            Entry.Linetype = "ByLayer"            '按对应图层设定线型
+            Entry.Lineweight = acLnWtByLayer
+            Entry.LinetypeScale = Default_LineScale
+        End If
+
+        ' Entry.Update
+    Next
+
+    ObjSelectionSet.Clear
+
+    '==================================================================================================
+    '实线且为不在图框_内框线、剖面线、Defpoints的移入粗实线层 ，原连续线其它颜色移入标注线层，但颜色不变
+    '==================================================================================================
+    ReDim gpCode(0 To 12)
+    ReDim dataValue(0 To 12)
+
+    gpCode(0) = -4
+    gpCode(1) = 0
+    gpCode(2) = 0
+    gpCode(3) = 0
+    gpCode(4) = 0
+    gpCode(5) = 0
+    gpCode(6) = -4
+    gpCode(7) = -4
+    gpCode(8) = 8
+    gpCode(9) = -4
+    gpCode(10) = -4
+    gpCode(11) = 8
+    gpCode(12) = -4
+
+    dataValue(0) = "<or"
+    dataValue(1) = "Line"
+    dataValue(2) = "Circle"
+    dataValue(3) = "Arc"
+    dataValue(4) = "Ellipse"
+    dataValue(5) = "Spline"
+    dataValue(6) = "or>"
+    dataValue(7) = "<NOT"
+    dataValue(8) = "图框_内框线"
+    dataValue(9) = "NOT>"
+    dataValue(10) = "<NOT"
+    dataValue(11) = "Defpoints"
+    dataValue(12) = "NOT>"
+
+    groupCode = gpCode
+    dataCode = dataValue
+    ObjSelectionSet.Select mode, , , groupCode, dataCode                  ' 图面全选
+
+    For Each Entry In ObjSelectionSet
+        If Entry.Color = 6 Then        '洋红色
+            Entry.Layer = "双点划线"
+            'Entry.color = 4           '青色
+
+        ElseIf Entry.Color = acWhite Then
+            Entry.Layer = "粗实线"
+        End If
+
+        Entry.Color = acByLayer
+        Entry.Lineweight = acLnWtByLayer
+        Entry.Linetype = "ByLayer"            '按对应图层设定线型
+    Next
+
+    ObjSelectionSet.Clear
+
+    '***************其它选择集的方式********************
+    '将所有DIM图层的内容放置于"标注层"                '
+    'ObjSelectionSet.Select acSelectionSetAll          '这一行命令可能选择太大，影响运算速度
+
+    ReDim gpCode(0 To 1)
+    ReDim dataValue(0 To 1)
+
+    gpCode(0) = 0
+    dataValue(0) = "Dimension"
+    groupCode = gpCode
+    dataCode = dataValue
+
+    ObjSelectionSet.Select mode, , , groupCode, dataCode              '全元素过滤选择
+
+    For Each Entry In ObjSelectionSet
+
+        If Entry.Layer = "Dim" Then
+            Entry.Layer = "标注线"
+            Entry.Color = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.Linetype = "ByLayer"                  '按对应图层设定线型
+        End If
+
+    Next
+
+    '将Defpoints图框各参数随层
+
+    ObjSelectionSet.Select acSelectionSetAll          '这一行命令可能选择太大，影响运算速度
+
+    For Each Entry In ObjSelectionSet
+
+        If Entry.Layer = "Defpoints" Then
+            Entry.Color = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.Linetype = "ByLayer"                  '按对应图层设定线型
+        ElseIf Entry.Layer = "图框_内框线" Then
+            Entry.Color = acByLayer
+            Entry.Lineweight = acLnWtByLayer
+            Entry.Linetype = "ByLayer"                  '按对应图层设定线型
+        End If
+    Next
+
+    '设置"标注线"图层为当前图层
+    Dim NowLayer As AcadLayer
+    Set NowLayer = ThisDrawing.Layers.Item("标注线")
+    ThisDrawing.ActiveLayer = NowLayer
+
+    ThisDrawing.SendCommand "_zoom a "               '该两行，作用一样，全图形最大化
+    ObjSelectionSet.Clear
+    ObjSelectionSet.Delete
+
+    On Error Resume Next
+ 
+    Dim ent As AcadEntity                           '希望能删除多余的图块
+    For Each Entry In ThisDrawing.ModelSpace
+        If TypeOf ent Is AcadBlockReference Then
+             ThisDrawing.Blocks(Entry.Name).Delete   '删除所有块，若有调用的不会删除，不用提示
+        End If
+    Next Entry
+  
+  
+    ThisDrawing.SetVariable "cmdecho", 1             ' scmde  是否回显提示和输入  0.关闭回显 1.打开回显
+    ThisDrawing.SetVariable "LWDISPLAY", 0           '默认不显示线宽
+     
+    ThisDrawing.Save
+
+    Dim MyFile  As String
+    Dim OldFile_head  As String
+    MyFile = ThisDrawing.Name                                       '带后缀名的文档名称
+
+    ' ******关闭合原来的旧文档**********'
+    Dim i
+    i = InStrRev(MyFile, ".")
+    OldFile_head = Mid(MyFile, 1, i - 5)
+    OldFile_head = "OldFile_head" & ".dwg"
+    ThisDrawing.Application.Documents(OldFile_head).Close           '为何不能关闭文档
+
+End Function
+
+Function SAVE_AS_Main_NIL()
+
+    Dim MyPath  As String
+    Dim MyFile  As String
+    Dim MyFile_head  As String
+    Dim insertionPnt(0 To 2) As Double
+    Dim Po(0 To 2) As Double
+    Dim blockRefObj As AcadBlockReference
+    Dim blockRefObj2 As AcadBlockReference
+
+    MyPath = ThisDrawing.Path                 '仅返回目录
+    Dim MyPath_all As String
+    MyPath_all = ThisDrawing.FullName         '返回文档目录+名称.后缀名
+
+    MyFile = ThisDrawing.Name                 '带后缀名的文档名称
+    Dim i
+    i = InStrRev(MyFile, ".")
+    MyFile_head = Mid(MyFile, 1, i - 1)
+    
+    Dim Doc_NEW
+
+    Set Doc_NEW = ThisDrawing.Application.Documents.Add("Main_NIL.dwt")          'Add方法创建一个基于指定模板的新图形
+    insertionPnt(0) = 0#: insertionPnt(1) = 0#: insertionPnt(2) = 0#             'CAD图形的参照原点，如果你的图像的参照原点不是这个，请更改
+
+    Set blockRefObj = ThisDrawing.ModelSpace.InsertBlock(insertionPnt, MyPath_all, 1#, 1#, 1#, 0#)
+
+
+    blockRefObj.Explode
+    blockRefObj.Delete
+    
+    Dim NewPath_File As String
+
+    NewPath_File = MyPath & "\" & MyFile_head & "_new.dwg"
+
+    ZoomExtents                                 '全屏居中
+    ThisDrawing.SaveAs (NewPath_File)           '保存为新文档
+
+End Function
+
+
+
+
