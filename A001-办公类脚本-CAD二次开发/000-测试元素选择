@@ -1,0 +1,34 @@
+Option Explicit
+
+Sub GetLine()
+    Dim ActiveDrawing As AcadDocument
+    Set ActiveDrawing = AutoCAD.ActiveDocument
+    
+    Dim ObjSelectionSet As AcadSelectionSet
+    ActiveDrawing.SelectionSets.Item(0).Delete
+    Set ObjSelectionSet = ActiveDrawing.SelectionSets.Add("newset1")
+    
+    Dim gpCode(0 To 1) As Integer
+    Dim dataValue(0 To 1) As Variant
+    
+    
+    gpCode(0) = 0
+    dataValue(0) = "Arc"
+
+    '线宽0.13mm
+    gpCode(1) = 370
+    dataValue(1) = "13"
+
+
+    Dim groupCode As Variant
+    Dim dataCode As Variant
+    groupCode = gpCode
+    dataCode = dataValue
+
+
+    ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+    
+    ObjSelectionSet.Highlight True
+        
+End Sub
+
