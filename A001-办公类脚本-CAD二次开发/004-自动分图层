@@ -1,7 +1,8 @@
 Option Explicit
 Public Sub Main()
+    '要有一个标准模板
 
-    SAVE_AS_Main_NIL                                    'COPY全部原图元素到一明珞标准空白模板中
+    SAVE_AS_Main_NIL                                    'COPY全部原图元素到标准空白模板中
     Main_AUTOLAYER
     
     MsgBox "图层分拣完毕！"
