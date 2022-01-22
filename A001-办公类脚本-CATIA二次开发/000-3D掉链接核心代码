@@ -1,0 +1,38 @@
+Sub CATMain()
+
+
+	Dim objProduct As Product
+	Set objProduct = CATIA.ActiveDocument.Product
+
+	Dim ProdDoc As ProductDocument
+	Set ProdDoc = objProduct.ReferenceProduct.Parent
+
+	Dim objStiEngine As StiEngine
+	Set objStiEngine = CATIA.GetItem("CAIEngine")
+
+	Dim ProdStiItem As StiDBItem
+	Set ProdStiItem = objStiEngine.GetStiDBItemFromAnyObject(ProdDoc)
+
+	Dim strProdDocName As String
+	strProdDocName = ProdStiItem.GetDocumentFullPath()
+
+	Dim curStiItem As StiDBItem
+	Dim strStiDocName As String
+
+	Dim StiChildrenList As StiDBChildren
+	Set StiChildrenList = ProdStiItem.GetChildren()
+
+	Dim i As Integer
+	For i = 1 To StiChildrenList.Count
+
+		Set curStiItem = StiChildrenList.Item(i)
+		'可获取掉链接文档的原位置
+		strStiDocName = curStiItem.GetDocumentFullPath
+		X = Len(strStiDocName)
+		Y = InStrRev(strStiDocName, "\")
+		Z = X - Y
+
+	Next i
+
+End Sub
+
