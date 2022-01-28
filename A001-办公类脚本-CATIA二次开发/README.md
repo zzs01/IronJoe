@@ -25,3 +25,7 @@
 - [ ] 更换产品中文件链接
 
 
+### bug
+- [ ] CATIA.RefreshDisplay 在VB6.0操作中，对64位CATIA无法起作用，不能提高效率
+
+
