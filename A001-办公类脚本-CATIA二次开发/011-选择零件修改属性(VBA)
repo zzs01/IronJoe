@@ -1,0 +1,116 @@
+Option Explicit
+
+Private Sub BTNCancel1_Click()
+End
+End Sub
+
+Private Sub BTNCancel2_Click()
+End
+End Sub
+
+
+
+Private Sub BTNConfirm1_Click()
+    MainForm007.Hide
+    Dim oSel As Object
+    Set oSel = CATIA.ActiveDocument.Selection
+
+    ReDim strArray(0)
+    strArray(0) = "Product"
+
+    'CATIA交互选择
+    Dim Status As String
+    Status = oSel.SelectElement3(strArray, "Select Product", False, CATMultiSelTriggWhenUserValidatesSelection, False)
+    
+    '按ESC能够退出当前程序
+    If (Status = "Cancel") Then Exit Sub
+    
+    Dim i As Integer
+    Dim prod2 As Product
+    Dim pathName As String
+    Dim doc As Document
+    Dim docName As String
+    Dim nameArr As Variant
+    Dim StrDefinition As String
+    StrDefinition = ComboBoxDefinition.Text
+
+    For i = 1 To oSel.Count
+        Set prod2 = oSel.Item2(i).Value
+        prod2.Definition = StrDefinition
+        pathName = prod2.ReferenceProduct.Parent.FullName
+        prod2.Update
+        nameArr = VBA.Split(pathName, "\")
+        docName = nameArr(UBound(nameArr))
+        Set doc = CATIA.Documents.item(docName)
+        doc.Save
+    Next
+    
+    
+    MainForm007.Show
+    'End
+End Sub
+
+
+Private Sub BTNConfirm2_Click()
+    MainForm007.Hide
+    Dim oSel As Object
+    Set oSel = CATIA.ActiveDocument.Selection
+
+    ReDim strArray(0)
+    strArray(0) = "Product"
+
+    'CATIA交互选择
+    Dim Status As String
+    Status = oSel.SelectElement3(strArray, "Select Product", False, CATMultiSelTriggWhenUserValidatesSelection, False)
+    
+    '按ESC能够退出当前程序
+    If (Status = "Cancel") Then Exit Sub
+    
+    Dim i As Integer
+    Dim prod2 As Product
+    Dim pathName As String
+    Dim doc As Document
+    Dim docName As String
+    Dim nameArr As Variant
+    Dim StrDescriptionRef As String
+    StrDescriptionRef = ComboBoxDescriptionRef.Text
+
+    For i = 1 To oSel.Count
+        Set prod2 = oSel.Item2(i).Value
+        prod2.DescriptionRef = StrDescriptionRef
+        prod2.Update
+        pathName = prod2.ReferenceProduct.Parent.FullName
+        nameArr = VBA.Split(pathName, "\")
+        docName = nameArr(UBound(nameArr))
+        Set doc = CATIA.Documents.item(docName)
+        doc.Save
+    Next
+    
+    MainForm007.Show
+
+End Sub
+
+Private Sub UserForm_Initialize()
+
+    ComboBoxDefinition.AddItem "新作替换"
+    ComboBoxDefinition.AddItem "新增零件"
+    ComboBoxDefinition.AddItem "追加工"
+    
+    ComboBoxDescriptionRef.AddItem "Bracket"
+    
+
+End Sub
+
+
+
+'====================================='
+'
+'自定义功能区域
+'
+'
+'====================================='
+
+
+Function GetSelectPart()
+
+End Function
