@@ -1,0 +1,59 @@
+Option Explicit
+
+Sub 插入图片()
+    '获取当前激活单元格
+    Dim AcCell As Range
+    Set AcCell = ActiveCell
+    
+    Dim ACTop As Double
+    Dim ACLeft As Double
+    Dim ACHeight As Double
+    Dim ACWidth As Double
+    
+    '判断选中单元格是否为合并单元格
+    If AcCell.MergeCells Then
+        ACHeight = AcCell.MergeArea.Height
+        ACWidth = AcCell.MergeArea.Width
+    Else
+        ACHeight = AcCell.Height
+        ACWidth = AcCell.Width
+    End If
+
+    '获取第一个单元格的位置信息
+    ACTop = AcCell.Top
+    ACLeft = AcCell.Left
+
+    '粘贴图片
+    ActiveSheet.Paste
+
+    '调整图片信息，打印，随变动，锁定纵横比
+    Selection.ShapeRange.LockAspectRatio = msoTrue
+    Selection.Placement = xlMoveAndSize
+    Selection.PrintObject = msoTrue
+    Selection.Locked = msoTrue
+
+    Dim SelHeight As Double
+    Dim SelWidth As Double
+
+    SelHeight = Selection.Height
+    SelWidth = Selection.Width
+
+    Dim sW As Double
+    Dim sH As Double
+
+    '图片高度宽度和单元格高度宽度对比
+    sW = SelWidth / ACWidth
+    sH = SelHeight / ACHeight
+
+    '判断比例，对图片进行缩小放大
+    If sW >= sH Then
+        Selection.Width = ACWidth * 0.95
+    Else
+        Selection.Height = ACHeight * 0.95
+    End If
+
+    '图片居中处理
+    Selection.Left = ACLeft + (ACWidth - Selection.Width) / 2
+    Selection.Top = ACTop + (ACHeight - Selection.Height) / 2
+
+End Sub
