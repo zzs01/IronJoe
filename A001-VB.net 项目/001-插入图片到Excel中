@@ -1,0 +1,81 @@
+Imports Microsoft.Office.Interop
+
+Class MainWindow
+    'Private ReadOnly msoTrue As Object
+    'Private ReadOnly xlMoveAndSize As Object
+
+
+    Private Sub BTNPaste_Click(sender As Object, e As RoutedEventArgs) Handles BTNPaste.Click
+        On Error Resume Next
+        Dim mExcelApp As Excel.Application
+        Dim ExcelWorkBook As Excel.Workbook
+        Dim ExcelSheet As Excel.Worksheet
+
+        mExcelApp = GetObject(, "Excel.application")
+        ExcelWorkBook = mExcelApp.ActiveWorkbook
+        'ExcelSheet = ExcelWorkBook.ActiveSheet
+        ExcelSheet = mExcelApp.ActiveSheet
+
+        Dim AcCell As Excel.Range
+        'AcCell = ExcelSheet.ActiveCell
+        AcCell = mExcelApp.ActiveCell
+        Debug.Print(AcCell.Address)
+
+        Dim ACTop As Double
+        Dim ACLeft As Double
+        Dim ACHeight As Double
+        Dim ACWidth As Double
+
+        If AcCell.MergeCells Then
+            ACHeight = AcCell.MergeArea.Height
+            ACWidth = AcCell.MergeArea.Width
+        Else
+            ACHeight = AcCell.Height
+            ACWidth = AcCell.Width
+        End If
+
+        ACTop = AcCell.Top
+        ACLeft = AcCell.Left
+
+        ExcelSheet.Paste()
+
+        Dim Sel As Object
+        Sel = mExcelApp.Selection
+
+        With Sel
+            .ShapeRange.LockAspectRatio = True
+            .Placement = 1
+            .PrintObject = True
+            .Locked = True
+        End With
+
+
+        Dim SelHeight As Double
+        Dim SelWidth As Double
+
+        SelHeight = Sel.Height
+        SelWidth = Sel.Width
+
+        Dim sW As Double
+        Dim sH As Double
+
+        sW = SelWidth / ACWidth
+        sH = SelHeight / ACHeight
+
+        Dim ScaleNum As Double
+
+        ScaleNum = CDbl(Scale.Text)
+
+        If sW >= sH Then
+            Sel.Width = ACWidth * ScaleNum
+
+        Else
+            Sel.Height = ACHeight * ScaleNum
+        End If
+
+        Sel.Left = ACLeft + (ACWidth - Sel.Width) / 2
+        Sel.Top = ACTop + (ACHeight - Sel.Height) / 2
+
+    End Sub
+
+End Class
