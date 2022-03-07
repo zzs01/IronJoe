@@ -1,0 +1,321 @@
+Option Explicit
+
+Sub SplitDrawing()
+
+    Dim ActiveDrawing As AcadDocument
+    Set ActiveDrawing = Autocad.ActiveDocument
+    
+    
+    '文档文件夹建立
+    Dim DrawingName As String
+    DrawingName = ActiveDrawing.FullName
+    
+    Dim suffixName As String
+    Dim NameArr As Variant
+    NameArr = VBA.Split(DrawingName, ".")
+    suffixName = NameArr(UBound(NameArr))
+    
+    Dim DrawingPathName As String
+    DrawingPathName = VBA.Replace(DrawingName, "." & suffixName, "")
+    
+    Dim ObjSelectionSet1 As AcadSelectionSet
+
+    Set ObjSelectionSet1 = GetObjSet(ActiveDrawing)
+
+    Call GetDrawingName(ActiveDrawing, ObjSelectionSet1)
+
+    If Dir(DrawingPathName, vbDirectory) = "" Then
+        MkDir DrawingPathName
+    End If
+    
+    Call CreateNewDrawing(ActiveDrawing, ObjSelectionSet1, DrawingPathName)
+    
+    MsgBox "程序运行完成，请检查，谢谢！"
+
+End Sub
+
+Function CreateNewDrawing(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSet As AcadSelectionSet, ByVal pathName As String)
+'====================================
+'
+'复制图形生成新图纸
+'
+'====================================
+    Dim Entry As AcadEntity
+
+    Dim ObjSelectionSet1 As AcadSelectionSet
+    Set ObjSelectionSet1 = DrawDocument.SelectionSets.Add("newset4")
+    
+    Dim Ent As AcadEntity
+    Dim DrawingName As String
+    
+    Dim NewDrawingName As String
+    Dim DocNew As AcadDocument
+
+    Dim pointList(0 To 2) As Double
+    Dim pointList1(0 To 2) As Double
+    
+    Dim PlineArray As Variant
+    
+    For Each Entry In ObjSelectionSet
+        
+        PlineArray = Entry.Coordinates
+        
+        pointList(0) = PlineArray(0)
+        pointList(1) = PlineArray(1)
+        pointList(2) = 0
+    
+        pointList1(0) = PlineArray(4)
+        pointList1(1) = PlineArray(5)
+        pointList1(2) = 0
+
+        
+        ObjSelectionSet1.Clear
+        ObjSelectionSet1.Select acSelectionSetWindow, pointList, pointList1
+        
+        For Each Ent In ObjSelectionSet1
+            If Ent.Layer = "条形码" Then
+                If TypeOf Ent Is AcadText Or TypeOf Ent Is AcadMText Then
+                    DrawingName = ReplaceTextObj(Ent.TextString)
+                End If
+            End If
+            
+        Next
+
+        '====================
+        '此处添加复制图纸代码,需要版本控制，居中？
+        '====================
+        NewDrawingName = pathName & "\" & DrawingName & ".dwg"
+        
+        ThisDrawing.Wblock NewDrawingName, ObjSelectionSet1
+        
+    Next
+
+End Function
+
+Function GetDrawingName(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSet As AcadSelectionSet)
+'====================================
+'
+'获取图框内名称
+'
+'====================================
+    Dim Entry As AcadEntity
+    Dim pointList(0 To 11) As Double
+
+    Dim ObjSelectionSet1 As AcadSelectionSet
+    Set ObjSelectionSet1 = DrawDocument.SelectionSets.Add("newset3")
+    
+    Dim Ent As AcadEntity
+    Dim DrawingName As String
+    
+    Dim DIC As Object
+    Set DIC = CreateObject("scripting.dictionary")
+    
+    
+    
+    For Each Entry In ObjSelectionSet
+    
+        'pointList = GetPointList(Entry)
+        
+        ObjSelectionSet1.Clear
+        ObjSelectionSet1.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry)
+        
+        For Each Ent In ObjSelectionSet1
+            If Ent.Layer = "条形码" Then
+                If TypeOf Ent Is AcadText Or TypeOf Ent Is AcadMText Then
+                    DrawingName = ReplaceTextObj(Ent.TextString)
+                End If
+            End If
+        Next
+        
+        If DIC.exists(DrawingName) Then
+            DIC(DrawingName) = DIC(DrawingName) + 1
+        Else
+            DIC(DrawingName) = 1
+        End If
+        
+    Next
+    
+    Dim DicObj
+    
+    Dim i As Integer
+    i = 0
+    
+    For Each DicObj In DIC
+        If DIC(DicObj) > 1 Then
+        i = i + 1
+            MsgBox "图纸名称重复，请检查：" & vbCrLf & DicObj & ":" & DIC(DicObj) & "张"
+        End If
+        
+        If i > 9 Then
+            MsgBox "图纸名称重复已达上限，请检查全部图纸!"
+            End
+        End If
+    Next
+    
+    If i > 1 Then End
+
+End Function
+
+Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
+    '选择所有大圈
+
+    
+    '图形范围内缩放
+    ZoomExtents
+    
+    Dim i As Integer
+    Dim k As Integer
+    i = DrawDocument.SelectionSets.Count
+    
+    '删除可能重复命名的选择集，删除所有
+    If i > 0 Then
+        For k = i - 1 To 0 Step -1
+            DrawDocument.SelectionSets.Item(k).Delete
+        Next
+    End If
+    
+    
+    '=====================================================================
+    '
+    '第一次选择，选择所有Defpoints图框的多段线
+    '
+    '=====================================================================
+    Dim ObjSelectionSet As AcadSelectionSet
+    Set ObjSelectionSet = DrawDocument.SelectionSets.Add("newset")
+    
+    Dim gpCode(0 To 1) As Integer
+    Dim dataValue(0 To 1) As Variant
+    
+    '图层
+    gpCode(0) = 8
+    dataValue(0) = "Defpoints"
+    
+    '多段线
+    gpCode(1) = 0
+    dataValue(1) = "LWPolyline"
+
+    Dim groupCode As Variant
+    Dim dataCode As Variant
+    
+    groupCode = gpCode
+    dataCode = dataValue
+
+
+    ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+    
+    '=====================================================================
+    '=====================================================================
+    
+    Dim Entry As AcadEntity
+    Dim Pline As Variant
+
+    Dim ObjSelectionSet1 As AcadSelectionSet
+    Set ObjSelectionSet1 = DrawDocument.SelectionSets.Add("newset1")
+    
+    Dim pointList(0 To 11) As Double
+    
+    '删除选择集元素定义
+    Dim EntryCollection(0) As AcadEntity
+    Dim ObjNUm1 As Long
+    Dim ObjNUm2 As Long
+    
+    Dim Entry1 As AcadEntity
+    
+    Dim ObjSelectionSet2 As AcadSelectionSet
+    Set ObjSelectionSet2 = DrawDocument.SelectionSets.Add("newset2")
+    
+    For Each Entry In ObjSelectionSet
+        ObjSelectionSet1.Clear
+        ObjSelectionSet1.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry), groupCode, dataCode
+        ObjNUm1 = ObjSelectionSet1.Count
+        
+        '再来一轮筛选，根据数量可排除最大的圈
+        
+        If ObjNUm1 > 1 Then
+            For Each Entry1 In ObjSelectionSet1
+                'set pointList = GetPointList(Entry)
+                
+                ObjSelectionSet2.Clear
+                ObjSelectionSet2.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry), groupCode, dataCode
+                ObjNUm2 = ObjSelectionSet2.Count
+                
+                
+                If ObjNUm2 < ObjNUm1 Then
+                    Set EntryCollection(0) = Entry1
+                    ObjSelectionSet.RemoveItems EntryCollection
+                End If
+            Next
+            
+        End If
+        
+    Next
+    
+    Set GetObjSet = ObjSelectionSet
+        
+End Function
+
+Function GetPointList(ByVal Entry As AcadEntity) As Variant
+'======================================
+'获取矩形角点坐标系集合
+'======================================
+    Dim PlineArray As Variant
+    PlineArray = Entry.Coordinates
+    
+    Dim pointList(0 To 11) As Double
+    
+    pointList(0) = PlineArray(0)
+    pointList(1) = PlineArray(1)
+    pointList(2) = 0
+
+    pointList(3) = PlineArray(2)
+    pointList(4) = PlineArray(3)
+    pointList(5) = 0
+
+    pointList(6) = PlineArray(4)
+    pointList(7) = PlineArray(5)
+    pointList(8) = 0
+
+    pointList(9) = PlineArray(6)
+    pointList(10) = PlineArray(7)
+    pointList(11) = 0
+    
+    GetPointList = pointList
+End Function
+
+Function ReplaceTextObj(ByVal beReplaceTxt As String) As String
+    '===========================
+    '使用正则表达式消除格式
+    '
+    '============================
+                                
+    Dim RE As Object
+    Dim match As Object
+    Dim matchs As Object
+    
+    '获取Regular Expression 组件
+    Set RE = CreateObject("Vbscript.RegExp")
+    
+
+    With RE
+        '查找匹配字符串时忽略大小写
+        '.IgnoreCase = True
+        .IgnoreCase = False
+        
+        '搜索整个字符串
+        .Global = True
+    
+        .Pattern = "\{\\.*;(.*)\}"
+        
+        '判断是否有匹配
+        If .test(beReplaceTxt) Then
+        'Debug.Print beReplaceTxt
+            Set matchs = .Execute(beReplaceTxt)
+            beReplaceTxt = matchs(0).submatches(0)
+        End If
+            
+    End With
+    
+    ReplaceTextObj = beReplaceTxt
+End Function
+
+
