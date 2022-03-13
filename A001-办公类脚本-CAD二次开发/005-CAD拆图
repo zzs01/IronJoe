@@ -1,14 +1,122 @@
 Option Explicit
 
-Sub SplitDrawing()
+'禁止屏幕刷新
+Private Declare Function LockWindowUpdate Lib "user32" (ByVal hWndLock As Long) As Long
 
-    Dim ActiveDrawing As AcadDocument
-    Set ActiveDrawing = Autocad.ActiveDocument
+'窗口置顶
+Private Declare Function SetWindowPos Lib "user32" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal X As Long, ByVal Y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+Private Const HWND_TOPMOST& = -1
+Private Const SWP_NOSIZE& = &H1
+Private Const SWP_NOMOVE& = &H2
+
+Const dealine = "2022/12/31"
+
+Function DDL()
+'''''''''''''
+'程序过期时间判定
+'
+''''''''''''
+Dim timeDifference
+Dim dateTime As Date
+
+dateTime = Date
+
+timeDifference = CInt(CDate(dealine) - dateTime)
+
+If dateTime < dealine Then
+    If timeDifference < 4 Then
+        Debug.Print 0
+        MsgBox "程序还有 " & timeDifference & " 天过期！"
+    End If
+ElseIf dateTime = dealine Then
+    MsgBox "程序今日过后将过期！请尽快联系管理员处理，谢谢！"
+Else
+    MsgBox "程序已过期，请联系管理员处理，谢谢！"
+    End
+End If
+
+End Function
+
+
+Private Sub Form_Initialize()
+'窗口置顶
+    SetWindowPos MyForm.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE Or SWP_NOSIZE
+
+    Call DDL
+    DDLTxt.Caption = "过期时间：" & dealine
+'    DDLTxt.Caption = "尊贵的VIP客户，现已对您进行永久授权！"
+    DDLTxt.AutoSize = True
     
+End Sub
+Private Sub BTNCancel_Click()
+    End
+End Sub
+
+Private Sub BTNSplit1_Click()
+    Dim AcadApp As Object
+    On Error Resume Next
+    Set AcadApp = GetObject(, "AutoCAD.Application")
     
+    '图形范围内缩放
+     AcadApp.ZoomExtents
+    
+    '禁止屏幕刷新
+    'LockWindowUpdate AcadApp.MainFrameHWND
+
+    Dim AcadDoc As AcadDocument
+    Set AcadDoc = AcadApp.ActiveDocument
+    
+    AcadDoc.SetVariable "EXPERT ", 2
+
+    Dim checkModel As Boolean
+
+    Call SplitDrawing(1, AcadDoc)
+    
+    AcadDoc.SetVariable "EXPERT ", 0
+
+    'LockWindowUpdate 0
+    
+    MsgBox "程序运行完成，请检查，谢谢！", vbOKOnly
+    
+    End
+    
+End Sub
+
+Private Sub BTNSplit2_Click()
+    Dim AcadApp As Object
+    On Error Resume Next
+    Set AcadApp = GetObject(, "AutoCAD.Application")
+    
+    '禁止屏幕刷新
+    'LockWindowUpdate (AcadApp.hwnd)
+    
+    '图形范围内缩放
+    ZoomExtents
+
+    Dim AcadDoc As AcadDocument
+    Set AcadDoc = AcadApp.ActiveDocument
+
+    AcadDoc.SetVariable "EXPERT ", 2
+    
+    Dim checkModel As Boolean
+    
+    Call SplitDrawing(0, AcadDoc)
+
+    AcadDoc.SetVariable "EXPERT ", 0
+    
+    'LockWindowUpdate (0)
+    
+    MsgBox "程序运行完成，请检查，谢谢！", vbOKOnly
+    
+    End
+End Sub
+
+
+Function SplitDrawing(ByVal SelectModel As Boolean, ByVal DrawDocument As AcadDocument)
+
     '文档文件夹建立
     Dim DrawingName As String
-    DrawingName = ActiveDrawing.FullName
+    DrawingName = DrawDocument.FullName
     
     Dim suffixName As String
     Dim NameArr As Variant
@@ -20,19 +128,19 @@ Sub SplitDrawing()
     
     Dim ObjSelectionSet1 As AcadSelectionSet
 
-    Set ObjSelectionSet1 = GetObjSet(ActiveDrawing)
+    Set ObjSelectionSet1 = GetObjSet(SelectModel, DrawDocument)
 
-    Call GetDrawingName(ActiveDrawing, ObjSelectionSet1)
+    Set ObjSelectionSet1 = GetDrawingName(DrawDocument, ObjSelectionSet1)
 
     If Dir(DrawingPathName, vbDirectory) = "" Then
         MkDir DrawingPathName
     End If
     
-    Call CreateNewDrawing(ActiveDrawing, ObjSelectionSet1, DrawingPathName)
+    Call CreateNewDrawing(DrawDocument, ObjSelectionSet1, DrawingPathName)
     
-    MsgBox "程序运行完成，请检查，谢谢！"
+    End
 
-End Sub
+End Function
 
 Function CreateNewDrawing(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSet As AcadSelectionSet, ByVal pathName As String)
 '====================================
@@ -45,54 +153,45 @@ Function CreateNewDrawing(ByVal DrawDocument As AcadDocument, ByVal ObjSelection
     Dim ObjSelectionSet1 As AcadSelectionSet
     Set ObjSelectionSet1 = DrawDocument.SelectionSets.Add("newset4")
     
+    Dim ObjSelectionSet2 As AcadSelectionSet
+    Set ObjSelectionSet2 = DrawDocument.SelectionSets.Add("newset5")
+    
     Dim Ent As AcadEntity
     Dim DrawingName As String
     
     Dim NewDrawingName As String
     Dim DocNew As AcadDocument
-
-    Dim pointList(0 To 2) As Double
-    Dim pointList1(0 To 2) As Double
     
-    Dim PlineArray As Variant
+    Dim PointList1 'As Double
+    Dim PointList2 'As Double
     
     For Each Entry In ObjSelectionSet
+        PointList1 = GetPointList1(Entry)
+        PointList2 = GetPointList2(Entry)
         
-        PlineArray = Entry.Coordinates
-        
-        pointList(0) = PlineArray(0)
-        pointList(1) = PlineArray(1)
-        pointList(2) = 0
-    
-        pointList1(0) = PlineArray(4)
-        pointList1(1) = PlineArray(5)
-        pointList1(2) = 0
-
+        '选择范围居中处理
+        'ZoomWindow PointList1, PointList2
         
         ObjSelectionSet1.Clear
-        ObjSelectionSet1.Select acSelectionSetWindow, pointList, pointList1
+        ObjSelectionSet1.Select acSelectionSetWindow, PointList1, PointList2
         
-        For Each Ent In ObjSelectionSet1
-            If Ent.Layer = "条形码" Then
-                If TypeOf Ent Is AcadText Or TypeOf Ent Is AcadMText Then
-                    DrawingName = ReplaceTextObj(Ent.TextString)
-                End If
-            End If
-            
-        Next
+        ObjSelectionSet2.Clear
+        ObjSelectionSet2.Select acSelectionSetWindow, PointList1, PointList2, SetDrawingNameGroupCode, SetDrawingNameDataCode
+        
+        DrawingName = ReplaceTextObj(ObjSelectionSet2.Item(0).TextString)
 
         '====================
         '此处添加复制图纸代码,需要版本控制，居中？
         '====================
         NewDrawingName = pathName & "\" & DrawingName & ".dwg"
-        
-        ThisDrawing.Wblock NewDrawingName, ObjSelectionSet1
+
+        DrawDocument.Wblock NewDrawingName, ObjSelectionSet1
         
     Next
 
 End Function
 
-Function GetDrawingName(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSet As AcadSelectionSet)
+Function GetDrawingName(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSet As AcadSelectionSet) As AcadSelectionSet
 '====================================
 '
 '获取图框内名称
@@ -110,29 +209,30 @@ Function GetDrawingName(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSe
     Dim DIC As Object
     Set DIC = CreateObject("scripting.dictionary")
     
+    Dim ObjNUm1 As Long
     
+    Dim EntryCollection(0) As AcadEntity
     
+    '根据图纸名称有无筛选移除，并只取第一个名称
     For Each Entry In ObjSelectionSet
-    
-        'pointList = GetPointList(Entry)
         
         ObjSelectionSet1.Clear
-        ObjSelectionSet1.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry)
+        ObjSelectionSet1.Select acSelectionSetWindow, GetPointList1(Entry), GetPointList2(Entry), SetDrawingNameGroupCode, SetDrawingNameDataCode
         
-        For Each Ent In ObjSelectionSet1
-            If Ent.Layer = "条形码" Then
-                If TypeOf Ent Is AcadText Or TypeOf Ent Is AcadMText Then
-                    DrawingName = ReplaceTextObj(Ent.TextString)
-                End If
-            End If
-        Next
+        ObjNUm1 = ObjSelectionSet1.Count
         
-        If DIC.exists(DrawingName) Then
+        If ObjNUm1 > 0 Then
+            DrawingName = ReplaceTextObj(ObjSelectionSet1.Item(0).TextString)
+        Else
+            Set EntryCollection(0) = Entry
+            ObjSelectionSet.RemoveItems EntryCollection
+        End If
+        
+        If DIC.Exists(DrawingName) Then
             DIC(DrawingName) = DIC(DrawingName) + 1
         Else
             DIC(DrawingName) = 1
         End If
-        
     Next
     
     Dim DicObj
@@ -142,26 +242,31 @@ Function GetDrawingName(ByVal DrawDocument As AcadDocument, ByVal ObjSelectionSe
     
     For Each DicObj In DIC
         If DIC(DicObj) > 1 Then
-        i = i + 1
+            i = i + 1
             MsgBox "图纸名称重复，请检查：" & vbCrLf & DicObj & ":" & DIC(DicObj) & "张"
         End If
-        
+
         If i > 9 Then
             MsgBox "图纸名称重复已达上限，请检查全部图纸!"
             End
         End If
     Next
     
-    If i > 1 Then End
+    If i > 0 Then
+        MsgBox "请仔细检查图纸名称，谢谢！"
+        End
+    End If
+    
+    Set GetDrawingName = ObjSelectionSet
 
 End Function
 
-Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
-    '选择所有大圈
-
-    
-    '图形范围内缩放
-    ZoomExtents
+Function GetObjSet(ByVal SelectModel As Boolean, ByVal DrawDocument As AcadDocument) As AcadSelectionSet
+    '===================================
+    '
+    '全图形选择图框,1代表全图选择，0代表手动选择
+    '
+    '===================================
     
     Dim i As Integer
     Dim k As Integer
@@ -173,7 +278,6 @@ Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
             DrawDocument.SelectionSets.Item(k).Delete
         Next
     End If
-    
     
     '=====================================================================
     '
@@ -200,8 +304,15 @@ Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
     groupCode = gpCode
     dataCode = dataValue
 
-
-    ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+    '选择模式切换
+    If SelectModel Then
+        ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+        If ObjSelectionSet.Count = 0 Then End
+    Else
+        MyForm.Hide
+        ObjSelectionSet.SelectOnScreen groupCode, dataCode
+        MyForm.Show
+    End If
     
     '=====================================================================
     '=====================================================================
@@ -226,19 +337,17 @@ Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
     
     For Each Entry In ObjSelectionSet
         ObjSelectionSet1.Clear
-        ObjSelectionSet1.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry), groupCode, dataCode
+        ObjSelectionSet1.Select acSelectionSetWindow, GetPointList1(Entry), GetPointList2(Entry), groupCode, dataCode
         ObjNUm1 = ObjSelectionSet1.Count
         
         '再来一轮筛选，根据数量可排除最大的圈
         
         If ObjNUm1 > 1 Then
             For Each Entry1 In ObjSelectionSet1
-                'set pointList = GetPointList(Entry)
                 
                 ObjSelectionSet2.Clear
-                ObjSelectionSet2.SelectByPolygon acSelectionSetCrossingPolygon, GetPointList(Entry), groupCode, dataCode
+                ObjSelectionSet2.Select acSelectionSetWindow, GetPointList1(Entry1), GetPointList2(Entry1), groupCode, dataCode
                 ObjNUm2 = ObjSelectionSet2.Count
-                
                 
                 If ObjNUm2 < ObjNUm1 Then
                     Set EntryCollection(0) = Entry1
@@ -254,32 +363,36 @@ Function GetObjSet(ByVal DrawDocument As AcadDocument) As AcadSelectionSet
         
 End Function
 
-Function GetPointList(ByVal Entry As AcadEntity) As Variant
+Function GetPointList1(ByVal Entry As AcadEntity) As Variant
 '======================================
-'获取矩形角点坐标系集合
+'获取矩形对角点坐标系集合1
 '======================================
     Dim PlineArray As Variant
     PlineArray = Entry.Coordinates
     
-    Dim pointList(0 To 11) As Double
+    Dim pointList(0 To 2) As Double
     
     pointList(0) = PlineArray(0)
     pointList(1) = PlineArray(1)
     pointList(2) = 0
-
-    pointList(3) = PlineArray(2)
-    pointList(4) = PlineArray(3)
-    pointList(5) = 0
-
-    pointList(6) = PlineArray(4)
-    pointList(7) = PlineArray(5)
-    pointList(8) = 0
-
-    pointList(9) = PlineArray(6)
-    pointList(10) = PlineArray(7)
-    pointList(11) = 0
     
-    GetPointList = pointList
+    GetPointList1 = pointList
+End Function
+
+Function GetPointList2(ByVal Entry As AcadEntity) As Variant
+'======================================
+'获取矩形对角点坐标系集合1
+'======================================
+    Dim PlineArray As Variant
+    PlineArray = Entry.Coordinates
+    
+    Dim pointList(0 To 2) As Double
+    
+    pointList(0) = PlineArray(4)
+    pointList(1) = PlineArray(5)
+    pointList(2) = 0
+    
+    GetPointList2 = pointList
 End Function
 
 Function ReplaceTextObj(ByVal beReplaceTxt As String) As String
@@ -294,7 +407,6 @@ Function ReplaceTextObj(ByVal beReplaceTxt As String) As String
     
     '获取Regular Expression 组件
     Set RE = CreateObject("Vbscript.RegExp")
-    
 
     With RE
         '查找匹配字符串时忽略大小写
@@ -318,4 +430,31 @@ Function ReplaceTextObj(ByVal beReplaceTxt As String) As String
     ReplaceTextObj = beReplaceTxt
 End Function
 
+Function SetDrawingNameGroupCode() As Variant
+'设置图纸名称
+    Dim gpCode(0 To 6) As Integer
+    gpCode(0) = -4
+    gpCode(1) = -4
+    gpCode(2) = 0
+    gpCode(3) = 0
+    gpCode(4) = -4
+    gpCode(5) = 8
+    gpCode(6) = -4
+    SetDrawingNameGroupCode = gpCode
+
+End Function
+
+Function SetDrawingNameDataCode() As Variant
+'设置图纸名称
+    Dim dataValue(0 To 6) As Variant
+    dataValue(0) = "<AND"
+    dataValue(1) = "<OR"
+    dataValue(2) = "TEXT"
+    dataValue(3) = "MTEXT"
+    dataValue(4) = "OR>"
+    dataValue(5) = "条形码"
+    dataValue(6) = "AND>"
+    SetDrawingNameDataCode = dataValue
+    
+End Function
 
