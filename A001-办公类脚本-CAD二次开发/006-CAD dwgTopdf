@@ -1,0 +1,287 @@
+Option Explicit
+'目前都是以A4为基准处理的
+
+Const dealine = "2022/12/31"
+Private Sub cancelBTN_Click()
+End
+End Sub
+
+Private Sub confirmBTN_Click()
+    Dim strPathName As String
+    strPathName = inPath.Text
+    
+    Dim outPathName As String
+    outPathName = outPath.Text
+    Call dwgTopdf(strPathName, outPathName)
+    
+    MsgBox "程序运行完成，请检查！"
+    
+    End
+End Sub
+
+Function DDL()
+    '''''''''''''
+    '程序过期时间判定
+    '
+    ''''''''''''
+    Dim timeDifference
+    Dim dateTime As Date
+    
+    dateTime = Date
+    
+    timeDifference = CInt(CDate(dealine) - dateTime)
+    
+    If dateTime < dealine Then
+        If timeDifference < 4 Then
+            Debug.Print 0
+            MsgBox "程序还有 " & timeDifference & " 天过期！"
+        End If
+    ElseIf dateTime = dealine Then
+        MsgBox "程序今日过后将过期！请尽快联系管理员处理，谢谢！"
+    Else
+        MsgBox "程序已过期，请联系管理员处理，谢谢！"
+        End
+    End If
+
+End Function
+
+Private Sub DDLTxt_Click()
+MsgBox "lll"
+End Sub
+
+Private Sub Form_Initialize()
+
+'    Call DDL
+'    DDLTxt.Caption = "过期时间：" & dealine
+    DDLTxt.Caption = "尊贵的VIP客户，现已对您进行永久授权！"
+    DDLTxt.AutoSize = True
+    
+End Sub
+
+Private Sub InputBRO_Click()
+    inPath.Text = GetFolderPath
+End Sub
+
+Private Sub OutputBRO_Click()
+    outPath.Text = GetFolderPath
+End Sub
+
+Function dwgTopdf(ByVal strPath As String, ByVal outPath As String)
+
+    Dim AcadApp As Object
+    Set AcadApp = GetObject(, "AutoCAD.Application")
+
+    Dim AcadDoc As AcadDocument
+    
+    Dim dwgList As Variant
+    Dim dwgPattern As String
+    
+    dwgPattern = "*.[Dd][Ww][Gg]*"
+    dwgList = FileList(strPath, dwgPattern)
+    
+    Dim dwgName 'As String
+    
+    For Each dwgName In dwgList
+        dwgName = strPath & "\" & dwgName
+        Set AcadDoc = AcadApp.Documents.Open(dwgName)
+        
+        AcadApp.ZoomExtents
+        
+        Call DoPdf(AcadDoc, outPath)
+        
+        AcadDoc.Close False
+    Next
+
+End Function
+Function DoPdf(ByVal dwg As AcadDocument, ByVal outPath As String)
+    '=======================================================
+    '转pdf
+    'dwgDirection 为 真时，竖屏，否则为横屏
+    '=======================================================
+    
+    Dim dwgDirection As Boolean
+    '=======================================================
+    '处理横屏还是竖屏打印
+    '=======================================================
+    Dim DrawDocument As AcadDocument
+    Set DrawDocument = AutoCAD.ActiveDocument
+    
+    Dim ObjSelectionSet As AcadSelectionSet
+    Set ObjSelectionSet = DrawDocument.SelectionSets.Add("newset")
+    
+    Dim gpCode(0 To 1) As Integer
+    Dim dataValue(0 To 1) As Variant
+    
+    '图层
+    gpCode(0) = 8
+    dataValue(0) = "Defpoints"
+    
+    '多段线
+    gpCode(1) = 0
+    dataValue(1) = "LWPolyline"
+
+    Dim groupCode As Variant
+    Dim dataCode As Variant
+    
+    groupCode = gpCode
+    dataCode = dataValue
+
+    ObjSelectionSet.Select acSelectionSetAll, , , groupCode, dataCode
+    
+    Dim lineLength As Integer
+    lineLength = ObjSelectionSet.Item(0).Length
+    
+    If lineLength Mod (2 * 1014) = 1 Then
+        '横屏打印
+        dwgDirection = True
+    Else
+        dwgDirection = False
+    End If
+    
+    '=======================================================
+    '处理横屏还是竖屏打印
+    '=======================================================
+    
+    
+    Dim ptObj As AcadPlot
+    Dim ptConfigs As AcadPlotConfigurations
+
+    '使用所有需要的参数创建一个新的绘图配置
+    Set ptObj = dwg.Plot
+    Set ptConfigs = dwg.PlotConfigurations
+    
+    '添加新布局，改用布局设置之后才可以打印出来
+    'Dim plotConfig As AcadPlotConfiguration
+    Dim plotConfig As AcadLayout
+    Set plotConfig = dwg.ActiveLayout
+    
+    '=======================================================
+    '布局，同样可以转出pdf，就是plt格式，直接改成pdf格式就行
+    '=======================================================
+    Dim AddedLayouts() As String
+    Dim LayoutList As Variant
+    Dim oLayout As AcadLayout
+    Dim ArraySize As Integer
+    
+    For Each oLayout In dwg.Layouts
+        ArraySize = ArraySize + 1
+        ReDim Preserve AddedLayouts(1 To ArraySize)
+        If LCase(oLayout.Name) = "model" Then '禁用新生成的布局可直接生成pdf格式文件
+            AddedLayouts(ArraySize) = oLayout.Name
+        End If
+    Next
+
+    LayoutList = AddedLayouts
+    
+    '=======================================================
+    '打印机配置设置
+    '=======================================================
+    plotConfig.ConfigName = "DWG To PDF.pc3"                                    '打印机设备名称,用这个打印出来会有图层
+    plotConfig.StandardScale = acScaleToFit                                     '打印比例，布满图纸
+    plotConfig.PlotRotation = ac0degrees                                        '旋转角度，不旋转
+    plotConfig.PlotType = acExtents                                             '打印范围，显示范围
+    plotConfig.StyleSheet = "monochrome.ctb"                                    '打印样式(画笔指定)
+    
+    If dwgDirection Then
+        plotConfig.CanonicalMediaName = "ISO_full_bleed_A4_(210.00_x_297.00_mm)" '图纸尺寸，竖屏
+    Else
+        plotConfig.CanonicalMediaName = "ISO_full_bleed_A4_(297.00_x_210.00_mm)"  '图纸尺寸，横屏
+    End If
+    
+    plotConfig.RefreshPlotDeviceInfo                                            '刷新打印机设备信息
+    
+    '输出位置处理
+    Dim DrawingName As String
+    DrawingName = dwg.Name
+    
+    Dim suffixName As String
+    Dim NameArr As Variant
+    NameArr = VBA.Split(DrawingName, ".")
+    suffixName = NameArr(UBound(NameArr))
+    
+    Dim DrawingPureName As String
+    DrawingPureName = VBA.Replace(DrawingName, "." & suffixName, "")
+    
+    Dim outPdfPath As String
+    outPdfPath = outPath & "\" & DrawingPureName & ".pdf"
+    
+    '打印布局文件至pdf
+    ptObj.SetLayoutsToPlot LayoutList
+    ptObj.PlotToFile outPdfPath
+
+    'Set plotConfig = Nothing
+    
+End Function
+
+Function GetFolderPath() As String
+
+    '================================================================
+    ' TITLE: BrowseForFolderDialogBox
+    '
+    ' PURPOSE: Open Window dialog box to choose directory to process.
+    ' Return the choosen path to a variable.
+    '
+    ' HOW TO USE: strResult = BrowseForFolderDialogBox()
+    ' ===============================================================
+    
+    Const WINDOW_HANDLE = 0
+    Const NO_OPTIONS = &H10
+    Dim objShellApp
+    Dim objFolder
+    Dim objFldrItem
+    Dim objPath
+    Dim strTitle
+    
+    Set objShellApp = CreateObject("Shell.Application")
+    Set objFolder = objShellApp.BrowseForFolder(WINDOW_HANDLE, strTitle, NO_OPTIONS)
+    
+    '获得文件夹的名称
+    objPath = ""
+    
+    '*****************************'
+    
+    If objFolder Is Nothing Then Exit Function
+    
+    '文件夹绝对路径
+    Set objFldrItem = objFolder.Self
+    objPath = objFldrItem.Path
+    
+    GetFolderPath = CStr(objPath)
+    
+    Set objShellApp = Nothing
+    Set objFolder = Nothing
+    Set objFldrItem = Nothing
+
+End Function
+
+Function FileList(ByVal startPath As String, ByVal filePattern As String) As Variant
+    '=================================
+    '取出所有符合后缀的文件,忽略大小写
+    '返回包含文件绝对路径的数组
+    '=================================
+    'filePattern = "*.[Xx][Ll][Ss]*"
+    '=================================
+    Dim Filename As String
+    Dim k As Integer
+    Dim arr() As Variant
+    
+    
+    '获取文件夹下文件名称
+    Filename = Dir(startPath & "\", vbNormal)
+    Do
+        '使用like判断是否为所需文件
+        If Filename Like filePattern Then
+            k = k + 1
+            '重新定义数组大小，保持前面数据，一维数组可以使用
+            ReDim Preserve arr(1 To k)
+            '满足条件的写入数组
+            arr(k) = Filename
+        End If
+        '重新传入下一个文件名称
+        Filename = Dir
+    '循环至文件名为空
+    Loop Until Filename = ""
+    
+    FileList = arr
+
+End Function
